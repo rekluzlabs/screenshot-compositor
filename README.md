@@ -17,24 +17,20 @@ If you are developing a production application, we recommend using TypeScript wi
 Screenshot Compositor User Guide
 
 Welcome to the Screenshot Compositor, a professional tool designed to transform raw app screenshots into store-ready marketing banners for the Google Play Store and Apple App Store. This application packages images inside sleek device mockups, overlays them with custom typography accents, and exports clean high-resolution compositions.  
+
 1. How to Launch and Access the App
 
 Because this is a local project, you access it via a local development server running on your machine.
 
     Open your terminal and navigate to the project directory.
 
-    Install the project dependencies (only required the first time):
-
-Bash
-
+    Install the project dependencies (only required the first time) by typing this command and hitting Enter:
     npm install
 
-3. Start the local environment server:
-   ```bash
-npm run dev
+    Start the local environment server by typing this command and hitting Enter:
+    npm run dev
 
-    Once running, the terminal will provide your local web address. Open your browser and navigate to:
-    Plaintext
+    Once running, the terminal will provide your local web address. Open your browser and navigate to this URL:
 
     http://localhost:5173/
 
