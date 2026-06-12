@@ -1,0 +1,753 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+
+const GRADIENTS = [
+  { label: "Forest", value: "linear-gradient(135deg, #0d2b1f 0%, #1a5c3a 50%, #0d2b1f 100%)" },
+  { label: "Midnight", value: "linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a1a 100%)" },
+  { label: "Ember", value: "linear-gradient(135deg, #1a0a00 0%, #3d1a00 50%, #1a0505 100%)" },
+  { label: "Slate", value: "linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" },
+  { label: "Dusk", value: "linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #0a1a2e 100%)" },
+  { label: "Sage", value: "linear-gradient(135deg, #0a1a0f 0%, #1a3a22 50%, #0a1a0f 100%)" },
+];
+
+const ACCENT_COLORS = [
+  { label: "Green", value: "#4ade80" },
+  { label: "Cyan", value: "#22d3ee" },
+  { label: "Amber", value: "#fbbf24" },
+  { label: "Rose", value: "#fb7185" },
+  { label: "Violet", value: "#a78bfa" },
+  { label: "White", value: "#f8fafc" },
+];
+
+const EXPORT_SIZES = [
+  { label: "Play Store Phone (1080×1920)", w: 1080, h: 1920 },
+  { label: "Play Store Tablet (1200×1920)", w: 1200, h: 1920 },
+  { label: "App Store 6.7\" (1290×2796)", w: 1290, h: 2796 },
+];
+
+const FONT_SIZES = [
+  { label: "Small", display: 56, sub: 28 },
+  { label: "Medium", display: 72, sub: 34 },
+  { label: "Large", display: 88, sub: 40 },
+  { label: "XL", display: 108, sub: 48 },
+];
+
+const LAYOUTS = [
+  { label: "Top Text", value: "top" },
+  { label: "Bottom Text", value: "bottom" },
+  { label: "Split", value: "split" },
+];
+
+export default function ScreenshotCompositor() {
+  const [screenshot, setScreenshot] = useState(null);
+  const [screenshotImg, setScreenshotImg] = useState(null);
+  const [gradient, setGradient] = useState(GRADIENTS[0]);
+  const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0]);
+  const [headline, setHeadline] = useState("Restore Your\nFamily Photos");
+  const [subtext, setSubtext] = useState("AI-powered color & clarity — right on your phone");
+  const [layout, setLayout] = useState(LAYOUTS[0]);
+  const [fontSize, setFontSize] = useState(FONT_SIZES[1]);
+  const [exportSize, setExportSize] = useState(EXPORT_SIZES[0]);
+  const [deviceShadow, setDeviceShadow] = useState(true);
+  const [showBadge, setShowBadge] = useState(false);
+  const [badgeText, setBadgeText] = useState("Free • No Ads • Offline");
+  const [generating, setGenerating] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const canvasRef = useRef(null);
+  const previewRef = useRef(null);
+  const fileRef = useRef(null);
+
+  const PREVIEW_W = 360;
+  const PREVIEW_H = 640;
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setScreenshot(URL.createObjectURL(file));
+    const img = new Image();
+    img.onload = () => setScreenshotImg(img);
+    img.src = URL.createObjectURL(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    setScreenshot(URL.createObjectURL(file));
+    const img = new Image();
+    img.onload = () => setScreenshotImg(img);
+    img.src = URL.createObjectURL(file);
+  };
+
+  const drawComposite = useCallback((canvas, W, H, scale = 1) => {
+    const ctx = canvas.getContext("2d");
+    canvas.width = W;
+    canvas.height = H;
+
+    const s = (v) => Math.round(v * scale);
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    const stops = gradient.value.match(/#[0-9a-fA-F]{6}/g) || ["#0d2b1f", "#1a5c3a", "#0d2b1f"];
+    stops.forEach((color, i) => bg.addColorStop(i / (stops.length - 1), color));
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle grain overlay (via noise pattern)
+    ctx.globalAlpha = 0.03;
+    for (let y = 0; y < H; y += 4) {
+      for (let x = 0; x < W; x += 4) {
+        const v = Math.random() * 255;
+        ctx.fillStyle = `rgb(${v},${v},${v})`;
+        ctx.fillRect(x, y, 4, 4);
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // Glow circle behind device
+    const glowX = W / 2;
+    const glowY = layout.value === "top" ? H * 0.65 : layout.value === "bottom" ? H * 0.35 : H * 0.5;
+    const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, W * 0.55);
+    const accentHex = accentColor.value;
+    glow.addColorStop(0, accentHex + "22");
+    glow.addColorStop(1, "transparent");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    // Text rendering helper
+    const renderText = (yStart) => {
+      const lines = headline.split("\n");
+      const lineH = s(fontSize.display * 1.15);
+      const totalTextH = lines.length * lineH + s(fontSize.sub * 1.6) + s(24);
+      let y = yStart;
+
+      ctx.textAlign = "center";
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = s(12);
+
+      lines.forEach((line, i) => {
+        ctx.font = `700 ${s(fontSize.display)}px 'Inter', 'Helvetica Neue', sans-serif`;
+        ctx.fillStyle = "#ffffff";
+        if (i === lines.length - 1) ctx.fillStyle = accentColor.value;
+        ctx.fillText(line, W / 2, y + lineH * i);
+      });
+
+      if (subtext) {
+        ctx.font = `400 ${s(fontSize.sub)}px 'Inter', 'Helvetica Neue', sans-serif`;
+        ctx.fillStyle = "rgba(255,255,255,0.65)";
+        ctx.shadowBlur = 0;
+        ctx.fillText(subtext, W / 2, y + lines.length * lineH + s(20));
+      }
+
+      ctx.shadowBlur = 0;
+      return totalTextH;
+    };
+
+    // Badge
+    const renderBadge = (yPos) => {
+      if (!showBadge || !badgeText) return;
+      const bW = s(260);
+      const bH = s(44);
+      const bX = (W - bW) / 2;
+      const bY = yPos;
+      const r = s(22);
+      ctx.beginPath();
+      ctx.moveTo(bX + r, bY);
+      ctx.lineTo(bX + bW - r, bY);
+      ctx.quadraticCurveTo(bX + bW, bY, bX + bW, bY + r);
+      ctx.lineTo(bX + bW, bY + bH - r);
+      ctx.quadraticCurveTo(bX + bW, bY + bH, bX + bW - r, bY + bH);
+      ctx.lineTo(bX + r, bY + bH);
+      ctx.quadraticCurveTo(bX, bY + bH, bX, bY + bH - r);
+      ctx.lineTo(bX, bY + r);
+      ctx.quadraticCurveTo(bX, bY, bX + r, bY);
+      ctx.closePath();
+      ctx.fillStyle = accentColor.value + "22";
+      ctx.strokeStyle = accentColor.value + "55";
+      ctx.lineWidth = s(1.5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.font = `500 ${s(22)}px 'Inter', sans-serif`;
+      ctx.fillStyle = accentColor.value;
+      ctx.textAlign = "center";
+      ctx.fillText(badgeText, W / 2, bY + bH * 0.68);
+    };
+
+    // Device frame + screenshot
+    const drawDevice = (deviceYCenter) => {
+      const phoneW = W * 0.72;
+      const phoneAR = 19.5 / 9;
+      const phoneH = phoneW * phoneAR;
+      const phoneX = (W - phoneW) / 2;
+      const phoneY = deviceYCenter - phoneH / 2;
+      const cornerR = phoneW * 0.09;
+
+      if (deviceShadow) {
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        ctx.shadowBlur = s(48);
+        ctx.shadowOffsetY = s(24);
+      }
+
+      // Phone body
+      ctx.beginPath();
+      ctx.moveTo(phoneX + cornerR, phoneY);
+      ctx.lineTo(phoneX + phoneW - cornerR, phoneY);
+      ctx.quadraticCurveTo(phoneX + phoneW, phoneY, phoneX + phoneW, phoneY + cornerR);
+      ctx.lineTo(phoneX + phoneW, phoneY + phoneH - cornerR);
+      ctx.quadraticCurveTo(phoneX + phoneW, phoneY + phoneH, phoneX + phoneW - cornerR, phoneY + phoneH);
+      ctx.lineTo(phoneX + cornerR, phoneY + phoneH);
+      ctx.quadraticCurveTo(phoneX, phoneY + phoneH, phoneX, phoneY + phoneH - cornerR);
+      ctx.lineTo(phoneX, phoneY + cornerR);
+      ctx.quadraticCurveTo(phoneX, phoneY, phoneX + cornerR, phoneY);
+      ctx.closePath();
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fill();
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Bezel stroke
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.lineWidth = s(3);
+      ctx.stroke();
+
+      // Screen inset
+      const bz = phoneW * 0.035;
+      const screenX = phoneX + bz;
+      const screenY = phoneY + bz;
+      const screenW = phoneW - bz * 2;
+      const screenH = phoneH - bz * 2;
+      const screenR = cornerR * 0.75;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(screenX + screenR, screenY);
+      ctx.lineTo(screenX + screenW - screenR, screenY);
+      ctx.quadraticCurveTo(screenX + screenW, screenY, screenX + screenW, screenY + screenR);
+      ctx.lineTo(screenX + screenW, screenY + screenH - screenR);
+      ctx.quadraticCurveTo(screenX + screenW, screenY + screenH, screenX + screenW - screenR, screenY + screenH);
+      ctx.lineTo(screenX + screenR, screenY + screenH);
+      ctx.quadraticCurveTo(screenX, screenY + screenH, screenX, screenY + screenH - screenR);
+      ctx.lineTo(screenX, screenY + screenR);
+      ctx.quadraticCurveTo(screenX, screenY, screenX + screenR, screenY);
+      ctx.closePath();
+      ctx.clip();
+
+      if (screenshotImg) {
+        const imgAR = screenshotImg.width / screenshotImg.height;
+        const screenAR = screenW / screenH;
+        let drawW, drawH, drawX, drawY;
+        if (imgAR > screenAR) {
+          drawH = screenH;
+          drawW = drawH * imgAR;
+          drawX = screenX + (screenW - drawW) / 2;
+          drawY = screenY;
+        } else {
+          drawW = screenW;
+          drawH = drawW / imgAR;
+          drawX = screenX;
+          drawY = screenY + (screenH - drawH) / 2;
+        }
+        ctx.drawImage(screenshotImg, drawX, drawY, drawW, drawH);
+      } else {
+        ctx.fillStyle = "#111";
+        ctx.fillRect(screenX, screenY, screenW, screenH);
+        ctx.font = `${s(28)}px sans-serif`;
+        ctx.fillStyle = "rgba(255,255,255,0.2)";
+        ctx.textAlign = "center";
+        ctx.fillText("Your Screenshot", screenX + screenW / 2, screenY + screenH / 2);
+      }
+
+      ctx.restore();
+
+      // Dynamic island
+      const diW = phoneW * 0.28;
+      const diH = phoneW * 0.04;
+      const diX = phoneX + phoneW / 2 - diW / 2;
+      const diY = phoneY + bz * 1.5;
+      ctx.fillStyle = "#000";
+      ctx.beginPath();
+      ctx.roundRect(diX, diY, diW, diH, diH / 2);
+      ctx.fill();
+    };
+
+    // Layout positions
+    const textPad = s(90);
+    const textBlockH = (headline.split("\n").length + 1) * fontSize.display * 1.3 * scale;
+    const badgePad = showBadge ? s(64) : 0;
+
+    if (layout.value === "top") {
+      renderText(textPad + s(fontSize.display));
+      if (showBadge) renderBadge(textPad + textBlockH + s(16));
+      drawDevice(H * 0.68);
+    } else if (layout.value === "bottom") {
+      drawDevice(H * 0.38);
+      renderText(H * 0.68);
+      if (showBadge) renderBadge(H * 0.68 + textBlockH + s(8));
+    } else {
+      renderText(textPad + s(fontSize.display * 0.5));
+      if (showBadge) renderBadge(textPad + textBlockH * 0.6 + s(8));
+      drawDevice(H * 0.62);
+    }
+  }, [screenshot, screenshotImg, gradient, accentColor, headline, subtext, layout, fontSize, deviceShadow, showBadge, badgeText]);
+
+  useEffect(() => {
+    const canvas = previewRef.current;
+    if (!canvas) return;
+    drawComposite(canvas, PREVIEW_W, PREVIEW_H, PREVIEW_H / exportSize.h);
+  }, [drawComposite, exportSize]);
+
+  const handleExport = async () => {
+    setGenerating(true);
+    const canvas = canvasRef.current;
+    drawComposite(canvas, exportSize.w, exportSize.h, 1);
+    await new Promise(r => setTimeout(r, 100));
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `screenshot-${exportSize.w}x${exportSize.h}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setGenerating(false);
+    }, "image/png");
+  };
+
+  const handleAISuggest = async () => {
+    setAiLoading(true);
+    try {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          system: `You are a mobile app store copywriter. Generate concise, punchy screenshot headline copy.
+Return ONLY valid JSON, no markdown, no explanation. Format:
+{"headline": "Line one\\nLine two", "subtext": "Short supporting line under 60 chars"}
+Rules: headline max 6 words per line, 1-2 lines, second line is the "wow" line. Subtext is benefit-focused, plain english.`,
+          messages: [{
+            role: "user",
+            content: `App description: ${headline}\nWrite a better headline and subtext for a Play Store screenshot.`
+          }]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.find(b => b.type === "text")?.text || "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+      if (parsed.headline) setHeadline(parsed.headline);
+      if (parsed.subtext) setSubtext(parsed.subtext);
+    } catch (e) {
+      console.error("AI suggest failed:", e);
+    }
+    setAiLoading(false);
+  };
+
+  const styles = {
+    root: {
+      minHeight: "100vh",
+      background: "#0d0d0d",
+      color: "#e8e8e8",
+      fontFamily: "'Inter', system-ui, sans-serif",
+      display: "flex",
+      flexDirection: "column",
+    },
+    header: {
+      padding: "20px 32px",
+      borderBottom: "1px solid #1e1e1e",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+    },
+    headerDot: {
+      width: 8, height: 8, borderRadius: "50%",
+      background: "#4ade80",
+    },
+    headerTitle: {
+      fontSize: 15,
+      fontWeight: 600,
+      color: "#f0f0f0",
+      letterSpacing: "0.02em",
+    },
+    headerSub: {
+      fontSize: 12,
+      color: "#555",
+      marginLeft: "auto",
+    },
+    body: {
+      display: "flex",
+      flex: 1,
+      gap: 0,
+    },
+    panel: {
+      width: 320,
+      background: "#111",
+      borderRight: "1px solid #1e1e1e",
+      padding: "24px 20px",
+      overflowY: "auto",
+      display: "flex",
+      flexDirection: "column",
+      gap: 24,
+    },
+    section: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 10,
+    },
+    sectionLabel: {
+      fontSize: 10,
+      fontWeight: 700,
+      letterSpacing: "0.12em",
+      color: "#444",
+      textTransform: "uppercase",
+    },
+    dropzone: {
+      border: "1.5px dashed #2a2a2a",
+      borderRadius: 10,
+      padding: "28px 16px",
+      textAlign: "center",
+      cursor: "pointer",
+      transition: "border-color 0.2s",
+      background: "#0a0a0a",
+    },
+    dropzoneText: { fontSize: 13, color: "#555" },
+    dropzoneHint: { fontSize: 11, color: "#333", marginTop: 4 },
+    previewThumb: {
+      width: "100%",
+      height: 120,
+      objectFit: "contain",
+      borderRadius: 6,
+      background: "#0a0a0a",
+      border: "1px solid #1e1e1e",
+    },
+    chipRow: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+    chip: (active, accent) => ({
+      padding: "5px 12px",
+      borderRadius: 20,
+      fontSize: 12,
+      fontWeight: 500,
+      cursor: "pointer",
+      border: `1px solid ${active ? accent || "#4ade80" : "#2a2a2a"}`,
+      background: active ? (accent || "#4ade80") + "18" : "transparent",
+      color: active ? (accent || "#4ade80") : "#666",
+      transition: "all 0.15s",
+    }),
+    gradChip: (active, g) => ({
+      width: 36,
+      height: 36,
+      borderRadius: 8,
+      cursor: "pointer",
+      background: g.value,
+      border: active ? "2px solid #4ade80" : "2px solid transparent",
+      outline: active ? "1px solid #4ade8040" : "none",
+      transition: "border 0.15s",
+    }),
+    accentDot: (active, color) => ({
+      width: 26,
+      height: 26,
+      borderRadius: "50%",
+      cursor: "pointer",
+      background: color,
+      border: active ? "2px solid #fff" : "2px solid transparent",
+      boxShadow: active ? `0 0 0 3px ${color}44` : "none",
+      transition: "all 0.15s",
+    }),
+    textarea: {
+      background: "#0a0a0a",
+      border: "1px solid #2a2a2a",
+      borderRadius: 8,
+      color: "#e8e8e8",
+      fontSize: 13,
+      padding: "10px 12px",
+      fontFamily: "inherit",
+      resize: "vertical",
+      lineHeight: 1.5,
+      outline: "none",
+      width: "100%",
+    },
+    input: {
+      background: "#0a0a0a",
+      border: "1px solid #2a2a2a",
+      borderRadius: 8,
+      color: "#e8e8e8",
+      fontSize: 13,
+      padding: "8px 12px",
+      fontFamily: "inherit",
+      outline: "none",
+      width: "100%",
+    },
+    btn: (variant = "primary") => ({
+      padding: variant === "primary" ? "11px 20px" : "8px 14px",
+      borderRadius: 8,
+      fontWeight: 600,
+      fontSize: variant === "primary" ? 13 : 12,
+      cursor: "pointer",
+      border: "none",
+      background: variant === "primary" ? "#4ade80" : "#1e1e1e",
+      color: variant === "primary" ? "#0a1a10" : "#aaa",
+      transition: "opacity 0.15s",
+      width: variant === "primary" ? "100%" : "auto",
+    }),
+    toggleRow: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    toggleLabel: { fontSize: 13, color: "#888" },
+    toggle: (active) => ({
+      width: 36,
+      height: 20,
+      borderRadius: 10,
+      background: active ? "#4ade80" : "#2a2a2a",
+      position: "relative",
+      cursor: "pointer",
+      transition: "background 0.2s",
+    }),
+    toggleKnob: (active) => ({
+      position: "absolute",
+      top: 3,
+      left: active ? 19 : 3,
+      width: 14,
+      height: 14,
+      borderRadius: "50%",
+      background: "#fff",
+      transition: "left 0.2s",
+    }),
+    preview: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 32,
+      gap: 20,
+      background: "#0d0d0d",
+    },
+    previewLabel: {
+      fontSize: 11,
+      color: "#333",
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+    },
+    previewCanvas: {
+      borderRadius: 12,
+      boxShadow: "0 8px 48px rgba(0,0,0,0.6)",
+      border: "1px solid #1e1e1e",
+    },
+    exportRow: {
+      display: "flex",
+      gap: 10,
+      alignItems: "center",
+    },
+    select: {
+      background: "#111",
+      border: "1px solid #2a2a2a",
+      borderRadius: 8,
+      color: "#888",
+      fontSize: 12,
+      padding: "8px 12px",
+      fontFamily: "inherit",
+      outline: "none",
+      cursor: "pointer",
+    },
+  };
+
+  return (
+    <div style={styles.root}>
+      <div style={styles.header}>
+        <div style={styles.headerDot} />
+        <span style={styles.headerTitle}>Screenshot Compositor</span>
+        <span style={styles.headerSub}>Rekluz Labs · Offline Tool</span>
+      </div>
+
+      <div style={styles.body}>
+        {/* Left panel */}
+        <div style={styles.panel}>
+
+          {/* Upload */}
+          <div style={styles.section}>
+            <span style={styles.sectionLabel}>Screenshot</span>
+            <div
+              style={styles.dropzone}
+              onClick={() => fileRef.current.click()}
+              onDrop={handleDrop}
+              onDragOver={e => e.preventDefault()}
+            >
+              {screenshot
+                ? <img src={screenshot} alt="preview" style={styles.previewThumb} />
+                : <>
+                    <div style={styles.dropzoneText}>Drop screenshot here</div>
+                    <div style={styles.dropzoneHint}>or click to browse · PNG / JPG</div>
+                  </>
+              }
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
+            {screenshot && (
+              <button style={styles.btn("secondary")} onClick={() => { setScreenshot(null); setScreenshotImg(null); }}>
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Background */}
+          <div style={styles.section}>
+            <span style={styles.sectionLabel}>Background</span>
+            <div style={styles.chipRow}>
+              {GRADIENTS.map(g => (
+                <div
+                  key={g.label}
+                  style={styles.gradChip(gradient.label === g.label, g)}
+                  onClick={() => setGradient(g)}
+                  title={g.label}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Accent */}
+          <div style={styles.section}>
+            <span style={styles.sectionLabel}>Accent Color</span>
+            <div style={styles.chipRow}>
+              {ACCENT_COLORS.map(a => (
+                <div
+                  key={a.label}
+                  style={styles.accentDot(accentColor.label === a.label, a.value)}
+                  onClick={() => setAccentColor(a)}
+                  title={a.label}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Layout */}
+          <div style={styles.section}>
+            <span style={styles.sectionLabel}>Layout</span>
+            <div style={styles.chipRow}>
+              {LAYOUTS.map(l => (
+                <div
+                  key={l.value}
+                  style={styles.chip(layout.value === l.value, accentColor.value)}
+                  onClick={() => setLayout(l)}
+                >
+                  {l.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Font size */}
+          <div style={styles.section}>
+            <span style={styles.sectionLabel}>Text Size</span>
+            <div style={styles.chipRow}>
+              {FONT_SIZES.map(f => (
+                <div
+                  key={f.label}
+                  style={styles.chip(fontSize.label === f.label, accentColor.value)}
+                  onClick={() => setFontSize(f)}
+                >
+                  {f.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Headline */}
+          <div style={styles.section}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={styles.sectionLabel}>Headline</span>
+              <button
+                style={{ ...styles.btn("secondary"), opacity: aiLoading ? 0.5 : 1 }}
+                onClick={handleAISuggest}
+                disabled={aiLoading}
+              >
+                {aiLoading ? "Thinking…" : "✦ AI Suggest"}
+              </button>
+            </div>
+            <textarea
+              style={{ ...styles.textarea, minHeight: 72 }}
+              value={headline}
+              onChange={e => setHeadline(e.target.value)}
+              placeholder={"Line one\nLine two"}
+              rows={2}
+            />
+          </div>
+
+          {/* Subtext */}
+          <div style={styles.section}>
+            <span style={styles.sectionLabel}>Subtext</span>
+            <input
+              style={styles.input}
+              value={subtext}
+              onChange={e => setSubtext(e.target.value)}
+              placeholder="Short supporting line"
+            />
+          </div>
+
+          {/* Badge */}
+          <div style={styles.section}>
+            <div style={styles.toggleRow}>
+              <span style={styles.toggleLabel}>Show Badge</span>
+              <div style={styles.toggle(showBadge)} onClick={() => setShowBadge(v => !v)}>
+                <div style={styles.toggleKnob(showBadge)} />
+              </div>
+            </div>
+            {showBadge && (
+              <input
+                style={styles.input}
+                value={badgeText}
+                onChange={e => setBadgeText(e.target.value)}
+                placeholder="Free • No Ads • Offline"
+              />
+            )}
+          </div>
+
+          {/* Toggles */}
+          <div style={styles.section}>
+            <div style={styles.toggleRow}>
+              <span style={styles.toggleLabel}>Device Shadow</span>
+              <div style={styles.toggle(deviceShadow)} onClick={() => setDeviceShadow(v => !v)}>
+                <div style={styles.toggleKnob(deviceShadow)} />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Preview */}
+        <div style={styles.preview}>
+          <span style={styles.previewLabel}>Live Preview</span>
+          <canvas
+            ref={previewRef}
+            width={PREVIEW_W}
+            height={PREVIEW_H}
+            style={styles.previewCanvas}
+          />
+          <div style={styles.exportRow}>
+            <select
+              style={styles.select}
+              value={exportSize.label}
+              onChange={e => setExportSize(EXPORT_SIZES.find(s => s.label === e.target.value))}
+            >
+              {EXPORT_SIZES.map(s => (
+                <option key={s.label} value={s.label}>{s.label}</option>
+              ))}
+            </select>
+            <button
+              style={{ ...styles.btn("primary"), width: "auto", opacity: generating ? 0.6 : 1 }}
+              onClick={handleExport}
+              disabled={generating}
+            >
+              {generating ? "Exporting…" : "Export PNG"}
+            </button>
+          </div>
+          <canvas ref={canvasRef} style={{ display: "none" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
