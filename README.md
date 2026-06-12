@@ -1,24 +1,24 @@
-# React + Vite
+Here is the cleaned-up Markdown content with all the AI-added emojis removed while preserving the code references, headers, and formatting structure.
+React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+    @vitejs/plugin-react uses Oxc
 
-## React Compiler
+    @vitejs/plugin-react-swc uses SWC
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+React Compiler
 
-## Expanding the ESLint configuration
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see this documentation.
+Expanding the ESLint configuration
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the TS template for information on how to integrate TypeScript and typescript-eslint in your project.
 Screenshot Compositor User Guide
 
 Welcome to the Screenshot Compositor, a professional tool designed to transform raw app screenshots into store-ready marketing banners for the Google Play Store and Apple App Store. This application packages images inside sleek device mockups, overlays them with custom typography accents, and exports clean high-resolution compositions.  
-🚀 Key Features
+Key Features
 
     Instant Canvas Processing: Renders updates locally in real-time utilizing HTML5 Canvas architecture.  
 
@@ -28,7 +28,7 @@ Welcome to the Screenshot Compositor, a professional tool designed to transform 
 
     Copywriting Integration: Includes built-in connection structures to generate optimized, short, structured text recommendations using the Anthropic Claude API network architecture.  
 
-🎛️ Control Panel Reference
+Control Panel Reference
 
 The sidebar contains configuration settings grouped sequentially by visual impact layers:  
 1. Media Assets
@@ -41,17 +41,17 @@ The sidebar contains configuration settings grouped sequentially by visual impac
 
     Background Preset Matrix: Choose from 6 custom curated atmospheric ambient gradients:  
 
-        🌲 Forest (Deep Emerald Core)  
+        Forest (Deep Emerald Core)  
 
-        🌌 Midnight (Deep Cosmic Indigo)  
+        Midnight (Deep Cosmic Indigo)  
 
-        🪵 Ember (Dark Earth Vulcan Warmth)  
+        Ember (Dark Earth Vulcan Warmth)  
 
-        💻 Slate (Industrial Carbon Monochrome)  
+        Slate (Industrial Carbon Monochrome)  
 
-        🌆 Dusk (Deep Twilight Violet Night)  
+        Dusk (Deep Twilight Violet Night)  
 
-        🌿 Sage (Muted Organic Moss Accent)  
+        Sage (Muted Organic Moss Accent)  
 
     Accent Color Matrix: Defines the visual highlights for text emphasis colors, decorative hardware glowing fields, and inline badge packaging accents. Choices include Green, Cyan, Amber, Rose, Violet, or White.  
 
@@ -71,7 +71,7 @@ The sidebar contains configuration settings grouped sequentially by visual impac
 
     Headline Editor: Enter marketing slogans here. Use standard line breaks (Enter) to break text paths across multiple rows. The system targets the final row of your headline automatically to apply your selected accent brand highlight color colorizing format.  
 
-    ✦ AI Suggest Engine: Connects to online API endpoint architectures to translate your existing raw input description text block definitions into punchy marketing alternatives via JSON response styling models.  
+    AI Suggest Engine: Connects to online API endpoint architectures to translate your existing raw input description text block definitions into punchy marketing alternatives via JSON response styling models.  
 
     Subtext: Formats an optional horizontal secondary line below the primary title blocks in a balanced neutral opacified color tint.  
 
@@ -81,5 +81,6 @@ The sidebar contains configuration settings grouped sequentially by visual impac
 
     Device Shadow Toggle: Applies complex, multi-stage offset drop shadows beneath mockups to add deep dimensionality against your chosen background gradient.  
 
+Export Generation
 
 Click Export PNG to process your design. The compositor spins up an offline, full-scale shadow canvas matrix to calculate perfect crisp edge geometries before prompting your system browser to save the asset.
