@@ -25,7 +25,9 @@ Because this is a local project, you access it via a local development server ru
 
     Install the project dependencies (only required the first time):
 
-npm install
+Bash
+
+    npm install
 
 3. Start the local environment server:
    ```bash
