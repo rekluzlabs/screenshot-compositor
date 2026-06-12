@@ -5,22 +5,25 @@ Welcome to the Screenshot Compositor, a professional tool designed to transform 
 <img width="1408" height="768" alt="screenshot_compositor_image" src="https://github.com/user-attachments/assets/9dc13431-7983-40d3-854e-261b19f30344" />
 
 
-1. How to Launch and Access the App
+## 1. How to Launch and Access the App
 
-Because this is a local project, you access it via a local development server running on your machine.
+Because this is a local project, you access it via a local development server running on your machine. 
 
-    Open your terminal and navigate to the project directory.
+### Launching via Visual Studio Code:
+1. Open **Visual Studio Code**.
+2. Go to the top menu and select **File** > **Open Folder...**
+3. Select your main project folder (the one containing `package.json`) and click **Select Folder**.
+4. Open the built-in terminal by going to the top menu and selecting **Terminal** > **New Terminal**.
+5. In the terminal window that opens at the bottom of the screen, run the setup and launch commands below.
 
-    Install the project dependencies (only required the first time) by typing this command and hitting Enter:
-    npm install
+### Local Server Commands:
+* **Install project dependencies** (Only required the first time you set up the project):
+  **npm install**
+* **Start the local environment server** (Run this every time you want to use the tool):
+  **npm run dev**
 
-    Start the local environment server by typing this command and hitting Enter:
-    npm run dev
-
-    Once running, the terminal will provide your local web address. Open your browser and navigate to this URL:
-
-    http://localhost:5173/
-
+Once the server starts running, open your browser and navigate to this URL:
+**http://localhost:5173/**
 
 ---
 
