@@ -18,6 +18,9 @@ Screenshot Compositor User Guide
 
 Welcome to the Screenshot Compositor, a professional tool designed to transform raw app screenshots into store-ready marketing banners for the Google Play Store and Apple App Store. This application packages images inside sleek device mockups, overlays them with custom typography accents, and exports clean high-resolution compositions.  
 
+<img width="1408" height="768" alt="screenshot_compositor_image" src="https://github.com/user-attachments/assets/9dc13431-7983-40d3-854e-261b19f30344" />
+
+
 1. How to Launch and Access the App
 
 Because this is a local project, you access it via a local development server running on your machine.
