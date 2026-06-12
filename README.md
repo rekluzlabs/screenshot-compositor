@@ -1,4 +1,3 @@
-Here is the cleaned-up Markdown content with all the AI-added emojis removed while preserving the code references, headers, and formatting structure.
 React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
@@ -18,69 +17,87 @@ If you are developing a production application, we recommend using TypeScript wi
 Screenshot Compositor User Guide
 
 Welcome to the Screenshot Compositor, a professional tool designed to transform raw app screenshots into store-ready marketing banners for the Google Play Store and Apple App Store. This application packages images inside sleek device mockups, overlays them with custom typography accents, and exports clean high-resolution compositions.  
-Key Features
+1. How to Launch and Access the App
 
-    Instant Canvas Processing: Renders updates locally in real-time utilizing HTML5 Canvas architecture.  
+Because this is a local project, you access it via a local development server running on your machine.
 
-    Noise & Lighting FX: Automatically embeds a procedural textured grain overlay along with dynamic radial background highlights tied directly to an accent palette configuration.  
+    Open your terminal and navigate to the project directory.
 
-    Intelligent Device Framing: Implements clean hardware masking geometry complete with bezel styling, soft shadowing variants, and device structural components like a camera island overlay.  
+    Install the project dependencies (only required the first time):
 
-    Copywriting Integration: Includes built-in connection structures to generate optimized, short, structured text recommendations using the Anthropic Claude API network architecture.  
+npm install
 
-Control Panel Reference
+3. Start the local environment server:
+   ```bash
+npm run dev
 
-The sidebar contains configuration settings grouped sequentially by visual impact layers:  
-1. Media Assets
+    Once running, the terminal will provide your local web address. Open your browser and navigate to:
+    Plaintext
 
-    Screenshot Upload Dropzone: Drag and drop an app screenshot directly onto the target pane, or click to use the operating system file selector. Supports PNG and JPG file formats.  
+    http://localhost:5173/
 
-    Clear State Modifier: Removes active image objects and resets the nested bounding canvas back to fallback placeholder layouts.  
 
-2. Branding & Background Settings
+---
 
-    Background Preset Matrix: Choose from 6 custom curated atmospheric ambient gradients:  
+### 2. How to Add and Manage Screenshots
 
-        Forest (Deep Emerald Core)  
+The application provides two reliable methods for loading your raw app graphics into the device mockup workspace:
 
-        Midnight (Deep Cosmic Indigo)  
+#### Method A: Drag and Drop
+1. Locate your raw `.png` or `.jpg` app screenshot file in your operating system's file explorer (Windows Explorer or macOS Finder)[cite: 1].
+2. Click and hold the file, drag it over the dashed area labeled **Screenshot** on the left control panel, and release your mouse button[cite: 1].
 
-        Ember (Dark Earth Vulcan Warmth)  
+#### Method B: File Browser Selection
+1. Click anywhere inside the dashed **Screenshot** dropzone box[cite: 1].
+2. A system dialog box will pop up. Navigate to your app's graphic assets, select the screenshot file, and click **Open**[cite: 1].
 
-        Slate (Industrial Carbon Monochrome)  
+#### Updating or Removing Images
+* **Replacing an Image:** To swap screenshots, simply drag a new file over the control area or click it again to select a different file. The canvas updates automatically.
+* **Clearing the Canvas:** Click the **Clear** button underneath the thumbnail to purge the current image asset and revert back to the neutral placeholder state[cite: 1].
 
-        Dusk (Deep Twilight Violet Night)  
+---
 
-        Sage (Muted Organic Moss Accent)  
+### Key Features
 
-    Accent Color Matrix: Defines the visual highlights for text emphasis colors, decorative hardware glowing fields, and inline badge packaging accents. Choices include Green, Cyan, Amber, Rose, Violet, or White.  
+* **Instant Canvas Processing:** Renders updates locally in real-time utilizing HTML5 Canvas architecture[cite: 1].
+* **Noise & Lighting FX:** Automatically embeds a procedural textured grain overlay along with dynamic radial background highlights tied directly to an accent palette configuration[cite: 1].
+* **Intelligent Device Framing:** Implements clean hardware masking geometry complete with bezel styling, soft shadowing variants, and device structural components like a camera island overlay[cite: 1].
+* **Copywriting Integration:** Includes built-in connection structures to generate optimized, short, structured text recommendations using the Anthropic Claude API network architecture[cite: 1].
 
-3. Structural Composition Styles
+---
 
-    Layout Modes:
+### Control Panel Reference
 
-        Top Text: Positions typography banners near the header boundaries and pushes the graphic element device mockup downward.  
+The sidebar contains configuration settings grouped sequentially by visual impact layers[cite: 1]:
 
-        Bottom Text: Maximizes image positioning focus upwards while tracking text descriptions at the base.  
+#### Branding & Background Settings
+* **Background Preset Matrix:** Choose from 6 custom curated atmospheric ambient gradients[cite: 1]:
+  * **Forest** (Deep Emerald Core)[cite: 1]
+  * **Midnight** (Deep Cosmic Indigo)[cite: 1]
+  * **Ember** (Dark Earth Vulcan Warmth)[cite: 1]
+  * **Slate** (Industrial Carbon Monochrome)[cite: 1]
+  * **Dusk** (Deep Twilight Violet Night)[cite: 1]
+  * **Sage** (Muted Organic Moss Accent)[cite: 1]
+* **Accent Color Matrix:** Defines the visual highlights for text emphasis colors, decorative hardware glowing fields, and inline badge packaging accents[cite: 1]. Choices include Green, Cyan, Amber, Rose, Violet, or White[cite: 1].
 
-        Split: Distributes display typographic balances evenly with centralized focus tracking across the composition vertical axis.  
+#### Structural Composition Styles
+* **Layout Modes:**
+  * `Top Text`: Positions typography banners near the header boundaries and pushes the graphic element device mockup downward[cite: 1].
+  * `Bottom Text`: Maximizes image positioning focus upwards while tracking text descriptions at the base[cite: 1].
+  * `Split`: Distributes display typographic balances evenly with centralized focus tracking across the composition vertical axis[cite: 1].
+* **Text Size:** Adjusts font sizes on a multi-tier display hierarchy configuration matrix (Small, Medium, Large, XL)[cite: 1].
 
-    Text Size: Adjusts font sizes on a multi-tier display hierarchy configuration matrix (Small, Medium, Large, XL).  
+#### Text Composition & Marketing Inputs
+* **Headline Editor:** Enter marketing slogans here[cite: 1]. Use standard line breaks (`Enter`) to break text paths across multiple rows[cite: 1]. The system targets the **final row** of your headline automatically to apply your selected accent brand highlight color colorizing format[cite: 1].
+* **AI Suggest Engine:** Connects to online API endpoint architectures to translate your existing raw input description text block definitions into punchy marketing alternatives via JSON response styling models[cite: 1].
+* **Subtext:** Formats an optional horizontal secondary line below the primary title blocks in a balanced neutral opacified color tint[cite: 1].
 
-4. Text Composition & Marketing Inputs
+#### UI Elements & Post-Processing Toggles
+* **Show Badge Toggle:** Appends a pill-shaped tag overlay below headers to display structural details like licensing or utility flags (e.g., `"Free • No Ads • Offline"`)[cite: 1].
+* **Device Shadow Toggle:** Applies complex, multi-stage offset drop shadows beneath mockups to add deep dimensionality against your chosen background gradient[cite: 1].
 
-    Headline Editor: Enter marketing slogans here. Use standard line breaks (Enter) to break text paths across multiple rows. The system targets the final row of your headline automatically to apply your selected accent brand highlight color colorizing format.  
+---
 
-    AI Suggest Engine: Connects to online API endpoint architectures to translate your existing raw input description text block definitions into punchy marketing alternatives via JSON response styling models.  
+### Export Generation
 
-    Subtext: Formats an optional horizontal secondary line below the primary title blocks in a balanced neutral opacified color tint.  
-
-5. UI Elements & Post-Processing Toggles
-
-    Show Badge Toggle: Appends a pill-shaped tag overlay below headers to display structural details like licensing or utility flags (e.g., "Free • No Ads • Offline").  
-
-    Device Shadow Toggle: Applies complex, multi-stage offset drop shadows beneath mockups to add deep dimensionality against your chosen background gradient.  
-
-Export Generation
-
-Click Export PNG to process your design. The compositor spins up an offline, full-scale shadow canvas matrix to calculate perfect crisp edge geometries before prompting your system browser to save the asset.
+Click **Export PNG** to process your design[cite: 1]. The compositor spins up an offline, full-scale shadow canvas matrix to calculate perfect crisp edge geometries before prompting your system browser to save the asset[cite: 1].
