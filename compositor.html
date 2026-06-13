@@ -5,27 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Screenshot Compositor</title>
   
+  <!-- Load React, ReactDOM, and Babel directly in the browser -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       background: #0d0d0d;
+      height: 100%;
+      width: 100%;
       overflow: hidden;
+    }
+    /* Modern scrollbar styling for the sidebar panel */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #111;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a2a;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4ade80;
     }
   </style>
 </head>
 <body>
 
-  <div id="root"></div>
+  <div id="root" style="height: 100%;"></div>
 
+  <!-- In-browser Babel transpiler for JSX execution -->
   <script type="text/babel">
     const { useState, useRef, useEffect, useCallback } = React;
 
@@ -80,7 +99,6 @@
       const [showBadge, setShowBadge] = useState(false);
       const [badgeText, setBadgeText] = useState("Free • No Ads • Offline");
       const [generating, setGenerating] = useState(false);
-      const [aiLoading, setAiLoading] = useState(false);
 
       const canvasRef = useRef(null);
       const previewRef = useRef(null);
@@ -336,38 +354,14 @@
         }, "image/png");
       };
 
-      const handleAISuggest = async () => {
-        setAiLoading(true);
-        try {
-          const resp = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: "claude-sonnet-4-6",
-              max_tokens: 1000,
-              system: `You are a mobile app store copywriter. Generate concise, punchy screenshot headline copy. Return ONLY valid JSON.`,
-              messages: [{ role: "user", content: `App description: ${headline}` }]
-            })
-          });
-          const data = await resp.json();
-          const text = data.content?.find(b => b.type === "text")?.text || "";
-          const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
-          if (parsed.headline) setHeadline(parsed.headline);
-          if (parsed.subtext) setSubtext(parsed.subtext);
-        } catch (e) {
-          console.error("AI suggest failed:", e);
-        }
-        setAiLoading(false);
-      };
-
       const styles = {
-        root: { minHeight: "100vh", background: "#0d0d0d", color: "#e8e8e8", fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column" },
-        header: { padding: "20px 32px", borderBottom: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: 12 },
+        root: { height: "100vh", background: "#0d0d0d", color: "#e8e8e8", fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column" },
+        header: { height: "56px", minHeight: "56px", padding: "0 32px", borderBottom: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: 12, boxSizing: "border-box" },
         headerDot: { width: 8, height: 8, borderRadius: "50%", background: "#4ade80" },
         headerTitle: { fontSize: 15, fontWeight: 600, color: "#f0f0f0", letterSpacing: "0.02em" },
         headerSub: { fontSize: 12, color: "#555", marginLeft: "auto" },
-        body: { display: "flex", flex: 1 },
-        panel: { width: 320, background: "#111", borderRight: "1px solid #1e1e1e", padding: "24px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 24 },
+        body: { display: "flex", flex: 1, height: "calc(100vh - 56px)", overflow: "hidden" },
+        panel: { width: 320, minWidth: 320, background: "#111", borderRight: "1px solid #1e1e1e", padding: "24px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 24, boxSizing: "border-box" },
         section: { display: "flex", flexDirection: "column", gap: 10 },
         sectionLabel: { fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#444", textTransform: "uppercase" },
         dropzone: { border: "1.5px dashed #2a2a2a", borderRadius: 10, padding: "28px 16px", textAlign: "center", cursor: "pointer", background: "#0a0a0a" },
@@ -378,17 +372,16 @@
         chip: (active, accent) => ({ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: `1px solid ${active ? accent || "#4ade80" : "#2a2a2a"}`, background: active ? (accent || "#4ade80") + "18" : "transparent", color: active ? (accent || "#4ade80") : "#666" }),
         gradChip: (active, g) => ({ width: 36, height: 36, borderRadius: 8, cursor: "pointer", background: g.value, border: active ? "2px solid #4ade80" : "2px solid transparent" }),
         accentDot: (active, color) => ({ width: 26, height: 26, borderRadius: "50%", cursor: "pointer", background: color, border: active ? "2px solid #fff" : "2px solid transparent", boxShadow: active ? `0 0 0 3px ${color}44` : "none" }),
-        textarea: { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e8e8", fontSize: 13, padding: "10px 12px", fontFamily: "inherit", resize: "vertical", lineHeight: 1.5, outline: "none", width: "100%" },
-        input: { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e8e8", fontSize: 13, padding: "8px 12px", fontFamily: "inherit", outline: "none", width: "100%" },
+        textarea: { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e8e8", fontSize: 13, padding: "10px 12px", fontFamily: "inherit", resize: "none", lineHeight: 1.5, outline: "none", width: "100%", boxSizing: "border-box" },
+        input: { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e8e8", fontSize: 13, padding: "8px 12px", fontFamily: "inherit", outline: "none", width: "100%", boxSizing: "border-box" },
         btn: (variant = "primary") => ({ padding: variant === "primary" ? "11px 20px" : "8px 14px", borderRadius: 8, fontWeight: 600, fontSize: variant === "primary" ? 13 : 12, cursor: "pointer", border: "none", background: variant === "primary" ? "#4ade80" : "#1e1e1e", color: variant === "primary" ? "#0a1a10" : "#aaa", width: variant === "primary" ? "100%" : "auto" }),
         toggleRow: { display: "flex", alignItems: "center", justifyContent: "space-between" },
         toggleLabel: { fontSize: 13, color: "#888" },
         toggle: (active) => ({ width: 36, height: 20, borderRadius: 10, background: active ? "#4ade80" : "#2a2a2a", position: "relative", cursor: "pointer" }),
         toggleKnob: (active) => ({ position: "absolute", top: 3, left: active ? 19 : 3, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }),
-        preview: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, gap: 20, background: "#0d0d0d" },
-        previewLabel: { fontSize: 11, color: "#333", letterSpacing: "0.1em", textTransform: "uppercase" },
-        previewCanvas: { borderRadius: 12, boxShadow: "0 8px 48px rgba(0,0,0,0.6)", border: "1px solid #1e1e1e" },
-        exportRow: { display: "flex", gap: 10, alignItems: "center" },
+        preview: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", gap: 20, background: "#0d0d0d", overflow: "auto" },
+        previewCanvas: { borderRadius: 12, boxShadow: "0 8px 48px rgba(0,0,0,0.6)", border: "1px solid #1e1e1e", maxWidth: "100%", maxHeight: "calc(100% - 60px)", objectFit: "contain" },
+        exportRow: { display: "flex", gap: 10, alignItems: "center", justifyContent: "center", width: "100%" },
         select: { background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, color: "#888", fontSize: 12, padding: "8px 12px", fontFamily: "inherit", outline: "none", cursor: "pointer" },
       };
 
@@ -441,6 +434,12 @@
                   <div style={styles.toggle(showBadge)} onClick={() => setShowBadge(v => !v)}><div style={styles.toggleKnob(showBadge)} /></div>
                 </div>
                 {showBadge && <input style={styles.input} value={badgeText} onChange={e => setBadgeText(e.target.value)} />}
+              </div>
+              <div style={styles.section}>
+                <div style={styles.toggleRow}>
+                  <span style={styles.toggleLabel}>Device Shadow</span>
+                  <div style={styles.toggle(deviceShadow)} onClick={() => setDeviceShadow(v => !v)}><div style={styles.toggleKnob(deviceShadow)} /></div>
+                </div>
               </div>
             </div>
             <div style={styles.preview}>
