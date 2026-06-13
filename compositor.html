@@ -113,7 +113,6 @@ export default function ScreenshotCompositor() {
   const [showBadge, setShowBadge] = useState(false);
   const [badgeText, setBadgeText] = useState("Free • No Ads • Offline");
   const [generating, setGenerating] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
   
   const [workspaceHeight, setWorkspaceHeight] = useState(580);
 
@@ -161,14 +160,16 @@ export default function ScreenshotCompositor() {
 
   const drawComposite = useCallback((canvas, W, H, scale = 1) => {
     const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, W, H);
+    if (!ctx) return;
+    
     canvas.width = W;
     canvas.height = H;
+    ctx.clearRect(0, 0, W, H);
 
     const s = (v) => Math.round(v * scale);
 
     const bg = ctx.createLinearGradient(0, 0, W, H);
-    const stops = gradient.value.match(/#[0-9a-fA-F]{6}/g) || ["#0d2b1f", "#1a5c3a", "#0d2b1f"];
+    const stops = gradient?.value?.match(/#[0-9a-fA-F]{6}/g) || ["#0d2b1f", "#1a5c3a", "#0d2b1f"];
     stops.forEach((color, i) => bg.addColorStop(i / (stops.length - 1), color));
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
@@ -186,9 +187,9 @@ export default function ScreenshotCompositor() {
 
     ctx.save();
     const glowX = W / 2;
-    const glowY = layout.value === "top" ? H * 0.70 : layout.value === "bottom" ? H * 0.30 : H * 0.5;
+    const glowY = layout?.value === "top" ? H * 0.70 : layout?.value === "bottom" ? H * 0.30 : H * 0.5;
     const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, W * 0.6);
-    const accentHex = accentColor.value;
+    const accentHex = accentColor?.value || "#4ade80";
     glow.addColorStop(0, accentHex + "26");
     glow.addColorStop(1, "transparent");
     ctx.fillStyle = glow;
@@ -209,7 +210,7 @@ export default function ScreenshotCompositor() {
       lines.forEach((line, i) => {
         ctx.font = `700 ${s(fontSize.display)}px 'Inter', system-ui, sans-serif`;
         ctx.fillStyle = "#ffffff";
-        if (i === lines.length - 1) ctx.fillStyle = accentColor.value;
+        if (i === lines.length - 1) ctx.fillStyle = accentColor?.value || "#4ade80";
         ctx.fillText(line, W / 2, y + lineH * i);
       });
 
@@ -235,14 +236,14 @@ export default function ScreenshotCompositor() {
       ctx.save();
       ctx.beginPath();
       ctx.roundRect(bX, bY, bW, bH, r);
-      ctx.fillStyle = accentColor.value + "18";
-      ctx.strokeStyle = accentColor.value + "44";
+      ctx.fillStyle = (accentColor?.value || "#4ade80") + "18";
+      ctx.strokeStyle = (accentColor?.value || "#4ade80") + "44";
       ctx.lineWidth = s(2);
       ctx.fill();
       ctx.stroke();
       
       ctx.font = `600 ${s(20)}px 'Inter', sans-serif`;
-      ctx.fillStyle = accentColor.value;
+      ctx.fillStyle = accentColor?.value || "#4ade80";
       ctx.textAlign = "center";
       ctx.fillText(badgeText, W / 2, bY + bH * 0.64);
       ctx.restore();
@@ -317,11 +318,11 @@ export default function ScreenshotCompositor() {
     const textPad = s(80);
     const textBlockH = (headline.split("\n").length + 1) * fontSize.display * 1.25 * scale;
 
-    if (layout.value === "top") {
+    if (layout?.value === "top") {
       renderText(textPad + s(fontSize.display * 0.4));
       if (showBadge) renderBadge(textPad + textBlockH * 0.7);
       drawDevice(H * 0.66);
-    } else if (layout.value === "bottom") {
+    } else if (layout?.value === "bottom") {
       drawDevice(H * 0.34);
       renderText(H * 0.66);
       if (showBadge) renderBadge(H * 0.66 + textBlockH * 0.7);
@@ -341,9 +342,11 @@ export default function ScreenshotCompositor() {
   const handleExport = async () => {
     setGenerating(true);
     const canvas = canvasRef.current;
+    if (!canvas) return;
     drawComposite(canvas, exportSize.w, exportSize.h, 1);
     await new Promise(r => setTimeout(r, 100));
     canvas.toBlob((blob) => {
+      if (!blob) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -565,7 +568,7 @@ export default function ScreenshotCompositor() {
               {GRADIENTS.map(g => (
                 <div
                   key={g.label}
-                  style={getGradChipStyle(gradient.label === g.label, g)}
+                  style={getGradChipStyle(gradient?.label === g.label, g)}
                   onClick={() => setGradient(g)}
                   title={g.label}
                 />
@@ -580,7 +583,7 @@ export default function ScreenshotCompositor() {
               {ACCENT_COLORS.map(a => (
                 <div
                   key={a.label}
-                  style={getAccentDotStyle(accentColor.label === a.label, a.value)}
+                  style={getAccentDotStyle(accentColor?.label === a.label, a.value)}
                   onClick={() => setAccentColor(a)}
                   title={a.label}
                 />
@@ -594,8 +597,8 @@ export default function ScreenshotCompositor() {
             <div style={styles.chipRow}>
               {LAYOUTS.map(l => (
                 <div
-                  key={l.label}
-                  style={getChipStyle(layout.value === l.value, accentColor.value)}
+                  key={l.value}
+                  style={getChipStyle(layout?.value === l.value, accentColor?.value)}
                   onClick={() => setLayout(l)}
                 >
                   {l.label}
@@ -611,7 +614,7 @@ export default function ScreenshotCompositor() {
               {FONT_SIZES.map(f => (
                 <div
                   key={f.label}
-                  style={getChipStyle(fontSize.label === f.label, accentColor.value)}
+                  style={getChipStyle(fontSize?.label === f.label, accentColor?.value)}
                   onClick={() => setFontSize(f)}
                 >
                   {f.label}
@@ -680,7 +683,7 @@ export default function ScreenshotCompositor() {
           <div style={styles.exportRow}>
             <select
               style={styles.select}
-              value={exportSize.label}
+              value={exportSize?.label}
               onChange={e => setExportSize(EXPORT_SIZES.find(s => s.label === e.target.value))}
             >
               {EXPORT_SIZES.map(s => (
