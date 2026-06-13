@@ -37,6 +37,68 @@ const LAYOUTS = [
   { label: "Split", value: "split" },
 ];
 
+// Extracted dynamic style helpers to resolve evaluation errors
+const getChipStyle = (active, accent) => ({
+  padding: "5px 12px",
+  borderRadius: 20,
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: "pointer",
+  border: `1px solid ${active ? accent || "#4ade80" : "#2a2a2a"}`,
+  background: active ? (accent || "#4ade80") + "18" : "transparent",
+  color: active ? (accent || "#4ade80") : "#666",
+});
+
+const getGradChipStyle = (active, g) => ({
+  width: 36,
+  height: 36,
+  borderRadius: 8,
+  cursor: "pointer",
+  background: g.value,
+  border: active ? "2px solid #4ade80" : "2px solid transparent",
+});
+
+const getAccentDotStyle = (active, color) => ({
+  width: 26,
+  height: 26,
+  borderRadius: "50%",
+  cursor: "pointer",
+  background: color,
+  border: active ? "2px solid #fff" : "2px solid transparent",
+  boxShadow: active ? `0 0 0 3px ${color}44` : "none",
+});
+
+const getToggleStyle = (active) => ({
+  width: 36,
+  height: 20,
+  borderRadius: 10,
+  background: active ? "#4ade80" : "#2a2a2a",
+  position: "relative",
+  cursor: "pointer",
+});
+
+const getToggleKnobStyle = (active) => ({
+  position: "absolute",
+  top: 3,
+  left: active ? 19 : 3,
+  width: 14,
+  height: 14,
+  borderRadius: "50%",
+  background: "#fff",
+  transition: "left 0.2s",
+});
+
+const getBtnStyle = (variant = "primary") => ({
+  padding: variant === "primary" ? "11px 20px" : "8px 14px",
+  borderRadius: 8,
+  fontWeight: 600,
+  fontSize: variant === "primary" ? 13 : 12,
+  cursor: "pointer",
+  border: "none",
+  background: variant === "primary" ? "#4ade80" : "#1e1e1e",
+  color: variant === "primary" ? "#0a1a10" : "#aaa",
+});
+
 export default function ScreenshotCompositor() {
   const [screenshot, setScreenshot] = useState(null);
   const [screenshotImg, setScreenshotImg] = useState(null);
@@ -53,7 +115,6 @@ export default function ScreenshotCompositor() {
   const [generating, setGenerating] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   
-  // Track workspace container height dynamically
   const [workspaceHeight, setWorkspaceHeight] = useState(580);
 
   const canvasRef = useRef(null);
@@ -61,18 +122,15 @@ export default function ScreenshotCompositor() {
   const fileRef = useRef(null);
   const previewAreaRef = useRef(null);
 
-  // Compute live responsive viewport matrix bounds
   const PREVIEW_H = workspaceHeight;
   const PREVIEW_W = Math.round(PREVIEW_H * (exportSize.w / exportSize.h));
 
-  // Listen to browser sizing changes to scale canvas bounds
   useEffect(() => {
     if (!previewAreaRef.current) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (let entry of entries) {
         const containerHeight = entry.contentRect.height;
-        // Leave 120px safety floor padding for panels and buttons
         const optimizedHeight = Math.max(400, containerHeight - 120);
         setWorkspaceHeight(optimizedHeight);
       }
@@ -109,14 +167,12 @@ export default function ScreenshotCompositor() {
 
     const s = (v) => Math.round(v * scale);
 
-    // Background
     const bg = ctx.createLinearGradient(0, 0, W, H);
     const stops = gradient.value.match(/#[0-9a-fA-F]{6}/g) || ["#0d2b1f", "#1a5c3a", "#0d2b1f"];
     stops.forEach((color, i) => bg.addColorStop(i / (stops.length - 1), color));
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Subtle grain overlay (via noise pattern)
     ctx.save();
     ctx.globalAlpha = 0.03;
     for (let y = 0; y < H; y += 4) {
@@ -128,7 +184,6 @@ export default function ScreenshotCompositor() {
     }
     ctx.restore();
 
-    // Glow circle behind device
     ctx.save();
     const glowX = W / 2;
     const glowY = layout.value === "top" ? H * 0.70 : layout.value === "bottom" ? H * 0.30 : H * 0.5;
@@ -140,7 +195,6 @@ export default function ScreenshotCompositor() {
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
 
-    // Text rendering helper
     const renderText = (yStart) => {
       const lines = headline.split("\n");
       const lineH = s(fontSize.display * 1.15);
@@ -170,7 +224,6 @@ export default function ScreenshotCompositor() {
       return totalTextH;
     };
 
-    // Badge
     const renderBadge = (yPos) => {
       if (!showBadge || !badgeText) return;
       const bW = s(280);
@@ -195,7 +248,6 @@ export default function ScreenshotCompositor() {
       ctx.restore();
     };
 
-    // Device frame + screenshot
     const drawDevice = (deviceYCenter) => {
       const maxDeviceH = H * 0.58;
       const phoneH = maxDeviceH;
@@ -211,14 +263,12 @@ export default function ScreenshotCompositor() {
         ctx.shadowOffsetY = s(20);
       }
 
-      // Phone body
       ctx.beginPath();
       ctx.roundRect(phoneX, phoneY, phoneW, phoneH, cornerR);
       ctx.fillStyle = "#16161a";
       ctx.fill();
       ctx.restore();
 
-      // Bezel stroke
       ctx.save();
       ctx.roundRect(phoneX, phoneY, phoneW, phoneH, cornerR);
       ctx.strokeStyle = "rgba(255,255,255,0.14)";
@@ -226,7 +276,6 @@ export default function ScreenshotCompositor() {
       ctx.stroke();
       ctx.restore();
 
-      // Screen inset
       const bz = phoneW * 0.035;
       const screenX = phoneX + bz;
       const screenY = phoneY + bz;
@@ -251,7 +300,6 @@ export default function ScreenshotCompositor() {
       }
       ctx.restore();
 
-      // Dynamic Island / Device Notch
       if (exportSize.ratio > 1.7) {
         const diW = phoneW * 0.26;
         const diH = phoneW * 0.045;
@@ -266,7 +314,6 @@ export default function ScreenshotCompositor() {
       }
     };
 
-    // Layout positions
     const textPad = s(80);
     const textBlockH = (headline.split("\n").length + 1) * fontSize.display * 1.25 * scale;
 
@@ -305,36 +352,6 @@ export default function ScreenshotCompositor() {
       URL.revokeObjectURL(url);
       setGenerating(false);
     }, "image/png");
-  };
-
-  const handleAISuggest = async () => {
-    setAiLoading(true);
-    try {
-      const resp = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: `You are a mobile app store copywriter. Generate concise, punchy screenshot headline copy.
-Return ONLY valid JSON, no markdown, no explanation. Format:
-{"headline": "Line one\\nLine two", "subtext": "Short supporting line under 60 chars"}`,
-          messages: [{
-            role: "user",
-            content: `App description: ${headline}\nWrite a better headline and subtext for a Play Store screenshot.`
-          }]
-        })
-      });
-      const data = await resp.json();
-      const text = data.content?.find(b => b.type === "text")?.text || "";
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      if (parsed.headline) setHeadline(parsed.headline);
-      if (parsed.subtext) setSubtext(parsed.subtext);
-    } catch (e) {
-      console.error("AI suggest failed:", e);
-    }
-    setAiLoading(false);
   };
 
   const styles = {
@@ -425,33 +442,6 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
       flexWrap: "wrap",
       gap: 6,
     },
-    chip: (active, accent) => ({
-      padding: "5px 12px",
-      borderRadius: 20,
-      fontSize: 12,
-      fontWeight: 500,
-      cursor: "pointer",
-      border: `1px solid ${active ? accent || "#4ade80" : "#2a2a2a"}`,
-      background: active ? (accent || "#4ade80") + "18" : "transparent",
-      color: active ? (accent || "#4ade80") : "#666",
-    }),
-    gradChip: (active, g) => ({
-      width: 36,
-      height: 36,
-      borderRadius: 8,
-      cursor: "pointer",
-      background: g.value,
-      border: active ? "2px solid #4ade80" : "2px solid transparent",
-    }),
-    accentDot: (active, color) => ({
-      width: 26,
-      height: 26,
-      borderRadius: "50%",
-      cursor: "pointer",
-      background: color,
-      border: active ? "2px solid #fff" : "2px solid transparent",
-      boxShadow: active ? `0 0 0 3px ${color}44` : "none",
-    }),
     textarea: {
       background: "#0a0a0a",
       border: "1px solid #2a2a2a",
@@ -478,41 +468,12 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
       width: "100%",
       boxSizing: "border-box",
     },
-    btn: (variant = "primary") => ({
-      padding: variant === "primary" ? "11px 20px" : "8px 14px",
-      borderRadius: 8,
-      fontWeight: 600,
-      fontSize: variant === "primary" ? 13 : 12,
-      cursor: "pointer",
-      border: "none",
-      background: variant === "primary" ? "#4ade80" : "#1e1e1e",
-      color: variant === "primary" ? "#0a1a10" : "#aaa",
-      width: variant === "primary" ? "100%" : "auto",
-    }),
     toggleRow: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
     },
     toggleLabel: { fontSize: 13, color: "#888" },
-    toggle: (active) => ({
-      width: 36,
-      height: 20,
-      borderRadius: 10,
-      background: active ? "#4ade80" : "#2a2a2a",
-      position: "relative",
-      cursor: "pointer",
-    }),
-    toggleKnob: (active) => ({
-      position: "absolute",
-      top: 3,
-      left: active ? 19 : 3,
-      width: 14,
-      height: 14,
-      borderRadius: "50%",
-      background: "#fff",
-      transition: "left 0.2s",
-    }),
     preview: {
       flex: 1,
       display: "flex",
@@ -562,25 +523,32 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
 
   return (
     <div style={styles.root}>
-      <div style={styles.header}>
+      <header style={styles.header}>
         <div style={styles.headerDot} />
         <span style={styles.headerTitle}>Screenshot Compositor</span>
         <span style={styles.headerSub}>Rekluz Labs · Editor Workspace</span>
-      </div>
+      </header>
 
       <div style={styles.body}>
         <div style={styles.panel}>
           {/* Upload */}
           <div style={styles.section}>
             <span style={styles.sectionLabel}>Screenshot</span>
-            <div
-              style={styles.dropzone}
+            <input 
+              type="file" 
+              ref={fileRef} 
+              style={{ display: "none" }} 
+              onChange={handleImageUpload} 
+              accept="image/*"
+            />
+            <div 
+              style={styles.dropzone} 
               onClick={() => fileRef.current.click()}
               onDrop={handleDrop}
               onDragOver={e => e.preventDefault()}
             >
               {screenshot ? (
-                <img src={screenshot} alt="preview" style={styles.previewThumb} />
+                <img src={screenshot} alt="Preview Source" style={styles.previewThumb} />
               ) : (
                 <>
                   <div style={styles.dropzoneText}>Drop screenshot here</div>
@@ -588,12 +556,6 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
                 </>
               )}
             </div>
-            <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleImageUpload} />
-            {screenshot && (
-              <button style={styles.btn("secondary")} onClick={() => { setScreenshot(null); setScreenshotImg(null); }}>
-                Clear
-              </button>
-            )}
           </div>
 
           {/* Background */}
@@ -603,7 +565,7 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
               {GRADIENTS.map(g => (
                 <div
                   key={g.label}
-                  style={styles.gradChip(gradient.label === g.label, g)}
+                  style={getGradChipStyle(gradient.label === g.label, g)}
                   onClick={() => setGradient(g)}
                   title={g.label}
                 />
@@ -618,7 +580,7 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
               {ACCENT_COLORS.map(a => (
                 <div
                   key={a.label}
-                  style={styles.accentDot(accentColor.label === a.label, a.value)}
+                  style={getAccentDotStyle(accentColor.label === a.label, a.value)}
                   onClick={() => setAccentColor(a)}
                   title={a.label}
                 />
@@ -632,8 +594,8 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
             <div style={styles.chipRow}>
               {LAYOUTS.map(l => (
                 <div
-                  key={l.value}
-                  style={styles.chip(layout.value === l.value, accentColor.value)}
+                  key={l.label}
+                  style={getChipStyle(layout.value === l.value, accentColor.value)}
                   onClick={() => setLayout(l)}
                 >
                   {l.label}
@@ -649,7 +611,7 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
               {FONT_SIZES.map(f => (
                 <div
                   key={f.label}
-                  style={styles.chip(fontSize.label === f.label, accentColor.value)}
+                  style={getChipStyle(fontSize.label === f.label, accentColor.value)}
                   onClick={() => setFontSize(f)}
                 >
                   {f.label}
@@ -660,18 +622,9 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
 
           {/* Headline */}
           <div style={styles.section}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={styles.sectionLabel}>Headline</span>
-              <button
-                style={{ ...styles.btn("secondary"), opacity: aiLoading ? 0.5 : 1 }}
-                onClick={handleAISuggest}
-                disabled={aiLoading}
-              >
-                {aiLoading ? "Thinking…" : "✦ AI Suggest"}
-              </button>
-            </div>
+            <span style={styles.sectionLabel}>Headline</span>
             <textarea
-              style={{ ...styles.textarea, minHeight: 72 }}
+              style={styles.textarea}
               value={headline}
               onChange={e => setHeadline(e.target.value)}
               placeholder={"Line one\nLine two"}
@@ -694,8 +647,8 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
           <div style={styles.section}>
             <div style={styles.toggleRow}>
               <span style={styles.toggleLabel}>Show Badge</span>
-              <div style={styles.toggle(showBadge)} onClick={() => setShowBadge(v => !v)}>
-                <div style={styles.toggleKnob(showBadge)} />
+              <div style={getToggleStyle(showBadge)} onClick={() => setShowBadge(v => !v)}>
+                <div style={getToggleKnobStyle(showBadge)} />
               </div>
             </div>
             {showBadge && (
@@ -712,8 +665,8 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
           <div style={styles.section}>
             <div style={styles.toggleRow}>
               <span style={styles.toggleLabel}>Device Shadow</span>
-              <div style={styles.toggle(deviceShadow)} onClick={() => setDeviceShadow(v => !v)}>
-                <div style={styles.toggleKnob(deviceShadow)} />
+              <div style={getToggleStyle(deviceShadow)} onClick={() => setDeviceShadow(v => !v)}>
+                <div style={getToggleKnobStyle(deviceShadow)} />
               </div>
             </div>
           </div>
@@ -735,7 +688,7 @@ Return ONLY valid JSON, no markdown, no explanation. Format:
               ))}
             </select>
             <button
-              style={{ ...styles.btn("primary"), width: "auto", opacity: generating ? 0.6 : 1 }}
+              style={{ ...getBtnStyle("primary"), width: "auto", opacity: generating ? 0.6 : 1 }}
               onClick={handleExport}
               disabled={generating}
             >
