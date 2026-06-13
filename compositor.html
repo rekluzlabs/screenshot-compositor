@@ -1,703 +1,523 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-
-const GRADIENTS = [
-  { label: "Forest", value: "linear-gradient(135deg, #0d2b1f 0%, #1a5c3a 50%, #0d2b1f 100%)" },
-  { label: "Midnight", value: "linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a1a 100%)" },
-  { label: "Ember", value: "linear-gradient(135deg, #1a0a00 0%, #3d1a00 50%, #1a0505 100%)" },
-  { label: "Slate", value: "linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" },
-  { label: "Dusk", value: "linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #0a1a2e 100%)" },
-  { label: "Sage", value: "linear-gradient(135deg, #0a1a0f 0%, #1a3a22 50%, #0a1a0f 100%)" },
-];
-
-const ACCENT_COLORS = [
-  { label: "Green", value: "#4ade80" },
-  { label: "Cyan", value: "#22d3ee" },
-  { label: "Amber", value: "#fbbf24" },
-  { label: "Rose", value: "#fb7185" },
-  { label: "Violet", value: "#a78bfa" },
-  { label: "White", value: "#f8fafc" },
-];
-
-const EXPORT_SIZES = [
-  { label: "Play Store Phone (1080×1920)", w: 1080, h: 1920, ratio: 19.5 / 9 },
-  { label: "Play Store Tablet (1200×1920)", w: 1200, h: 1920, ratio: 16 / 10 },
-  { label: "App Store 6.7\" (1290×2796)", w: 1290, h: 2796, ratio: 19.5 / 9 },
-];
-
-const FONT_SIZES = [
-  { label: "Small", display: 56, sub: 28 },
-  { label: "Medium", display: 72, sub: 34 },
-  { label: "Large", display: 88, sub: 40 },
-  { label: "XL", display: 108, sub: 48 },
-];
-
-const LAYOUTS = [
-  { label: "Top Text", value: "top" },
-  { label: "Bottom Text", value: "bottom" },
-  { label: "Split", value: "split" },
-];
-
-// Extracted dynamic style helpers to resolve evaluation errors
-const getChipStyle = (active, accent) => ({
-  padding: "5px 12px",
-  borderRadius: 20,
-  fontSize: 12,
-  fontWeight: 500,
-  cursor: "pointer",
-  border: `1px solid ${active ? accent || "#4ade80" : "#2a2a2a"}`,
-  background: active ? (accent || "#4ade80") + "18" : "transparent",
-  color: active ? (accent || "#4ade80") : "#666",
-});
-
-const getGradChipStyle = (active, g) => ({
-  width: 36,
-  height: 36,
-  borderRadius: 8,
-  cursor: "pointer",
-  background: g.value,
-  border: active ? "2px solid #4ade80" : "2px solid transparent",
-});
-
-const getAccentDotStyle = (active, color) => ({
-  width: 26,
-  height: 26,
-  borderRadius: "50%",
-  cursor: "pointer",
-  background: color,
-  border: active ? "2px solid #fff" : "2px solid transparent",
-  boxShadow: active ? `0 0 0 3px ${color}44` : "none",
-});
-
-const getToggleStyle = (active) => ({
-  width: 36,
-  height: 20,
-  borderRadius: 10,
-  background: active ? "#4ade80" : "#2a2a2a",
-  position: "relative",
-  cursor: "pointer",
-});
-
-const getToggleKnobStyle = (active) => ({
-  position: "absolute",
-  top: 3,
-  left: active ? 19 : 3,
-  width: 14,
-  height: 14,
-  borderRadius: "50%",
-  background: "#fff",
-  transition: "left 0.2s",
-});
-
-const getBtnStyle = (variant = "primary") => ({
-  padding: variant === "primary" ? "11px 20px" : "8px 14px",
-  borderRadius: 8,
-  fontWeight: 600,
-  fontSize: variant === "primary" ? 13 : 12,
-  cursor: "pointer",
-  border: "none",
-  background: variant === "primary" ? "#4ade80" : "#1e1e1e",
-  color: variant === "primary" ? "#0a1a10" : "#aaa",
-});
-
-export default function ScreenshotCompositor() {
-  const [screenshot, setScreenshot] = useState(null);
-  const [screenshotImg, setScreenshotImg] = useState(null);
-  const [gradient, setGradient] = useState(GRADIENTS[0]);
-  const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0]);
-  const [headline, setHeadline] = useState("Restore Your\nFamily Photos");
-  const [subtext, setSubtext] = useState("AI-powered color & clarity — right on your phone");
-  const [layout, setLayout] = useState(LAYOUTS[0]);
-  const [fontSize, setFontSize] = useState(FONT_SIZES[1]);
-  const [exportSize, setExportSize] = useState(EXPORT_SIZES[0]);
-  const [deviceShadow, setDeviceShadow] = useState(true);
-  const [showBadge, setShowBadge] = useState(false);
-  const [badgeText, setBadgeText] = useState("Free • No Ads • Offline");
-  const [generating, setGenerating] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screenshot Compositor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  const [workspaceHeight, setWorkspaceHeight] = useState(580);
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body style="margin: 0; background: #0d0d0d;">
 
-  const canvasRef = useRef(null);
-  const previewRef = useRef(null);
-  const fileRef = useRef(null);
-  const previewAreaRef = useRef(null);
+  <div id="root"></div>
 
-  const PREVIEW_H = workspaceHeight;
-  const PREVIEW_W = Math.round(PREVIEW_H * (exportSize.w / exportSize.h));
+  <script type="text/babel">
+    // Paste the clean imports extracted version here
+    const { useState, useRef, useEffect, useCallback } = React;
 
-  useEffect(() => {
-    if (!previewAreaRef.current) return;
+    const GRADIENTS = [
+      { label: "Forest", value: "linear-gradient(135deg, #0d2b1f 0%, #1a5c3a 50%, #0d2b1f 100%)" },
+      { label: "Midnight", value: "linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a0a1a 100%)" },
+      { label: "Ember", value: "linear-gradient(135deg, #1a0a00 0%, #3d1a00 50%, #1a0505 100%)" },
+      { label: "Slate", value: "linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)" },
+      { label: "Dusk", value: "linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #0a1a2e 100%)" },
+      { label: "Sage", value: "linear-gradient(135deg, #0a1a0f 0%, #1a3a22 50%, #0a1a0f 100%)" },
+    ];
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const containerHeight = entry.contentRect.height;
-        const optimizedHeight = Math.max(400, containerHeight - 120);
-        setWorkspaceHeight(optimizedHeight);
-      }
+    const ACCENT_COLORS = [
+      { label: "Green", value: "#4ade80" },
+      { label: "Cyan", value: "#22d3ee" },
+      { label: "Amber", value: "#fbbf24" },
+      { label: "Rose", value: "#fb7185" },
+      { label: "Violet", value: "#a78bfa" },
+      { label: "White", value: "#f8fafc" },
+    ];
+
+    const EXPORT_SIZES = [
+      { label: "Play Store Phone (1080×1920)", w: 1080, h: 1920, ratio: 19.5 / 9 },
+      { label: "Play Store Tablet (1200×1920)", w: 1200, h: 1920, ratio: 16 / 10 },
+      { label: "App Store 6.7\" (1290×2796)", w: 1290, h: 2796, ratio: 19.5 / 9 },
+    ];
+
+    const FONT_SIZES = [
+      { label: "Small", display: 56, sub: 28 },
+      { label: "Medium", display: 72, sub: 34 },
+      { label: "Large", display: 88, sub: 40 },
+      { label: "XL", display: 108, sub: 48 },
+    ];
+
+    const LAYOUTS = [
+      { label: "Top Text", value: "top" },
+      { label: "Bottom Text", value: "bottom" },
+      { label: "Split", value: "split" },
+    ];
+
+    const getChipStyle = (active, accent) => ({
+      padding: "5px 12px",
+      borderRadius: 20,
+      fontSize: 12,
+      fontWeight: 500,
+      cursor: "pointer",
+      border: `1px solid ${active ? accent || "#4ade80" : "#2a2a2a"}`,
+      background: active ? (accent || "#4ade80") + "18" : "transparent",
+      color: active ? (accent || "#4ade80") : "#666",
     });
 
-    resizeObserver.observe(previewAreaRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
+    const getGradChipStyle = (active, g) => ({
+      width: 36,
+      height: 36,
+      borderRadius: 8,
+      cursor: "pointer",
+      background: g.value,
+      border: active ? "2px solid #4ade80" : "2px solid transparent",
+    });
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setScreenshot(URL.createObjectURL(file));
-    const img = new Image();
-    img.onload = () => setScreenshotImg(img);
-    img.src = URL.createObjectURL(file);
-  };
+    const getAccentDotStyle = (active, color) => ({
+      width: 26,
+      height: 26,
+      borderRadius: "50%",
+      cursor: "pointer",
+      background: color,
+      border: active ? "2px solid #fff" : "2px solid transparent",
+      boxShadow: active ? `0 0 0 3px ${color}44` : "none",
+    });
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    setScreenshot(URL.createObjectURL(file));
-    const img = new Image();
-    img.onload = () => setScreenshotImg(img);
-    img.src = URL.createObjectURL(file);
-  };
-
-  const drawComposite = useCallback((canvas, W, H, scale = 1) => {
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, W, H);
-    canvas.width = W;
-    canvas.height = H;
-
-    const s = (v) => Math.round(v * scale);
-
-    const bg = ctx.createLinearGradient(0, 0, W, H);
-    const stops = gradient.value.match(/#[0-9a-fA-F]{6}/g) || ["#0d2b1f", "#1a5c3a", "#0d2b1f"];
-    stops.forEach((color, i) => bg.addColorStop(i / (stops.length - 1), color));
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.save();
-    ctx.globalAlpha = 0.03;
-    for (let y = 0; y < H; y += 4) {
-      for (let x = 0; x < W; x += 4) {
-        const v = Math.random() * 255;
-        ctx.fillStyle = `rgb(${v},${v},${v})`;
-        ctx.fillRect(x, y, 4, 4);
-      }
-    }
-    ctx.restore();
-
-    ctx.save();
-    const glowX = W / 2;
-    const glowY = layout.value === "top" ? H * 0.70 : layout.value === "bottom" ? H * 0.30 : H * 0.5;
-    const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, W * 0.6);
-    const accentHex = accentColor.value;
-    glow.addColorStop(0, accentHex + "26");
-    glow.addColorStop(1, "transparent");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
-
-    const renderText = (yStart) => {
-      const lines = headline.split("\n");
-      const lineH = s(fontSize.display * 1.15);
-      const totalTextH = lines.length * lineH + s(fontSize.sub * 1.6) + s(24);
-      let y = yStart;
-
-      ctx.save();
-      ctx.textAlign = "center";
-      ctx.shadowColor = "rgba(0,0,0,0.5)";
-      ctx.shadowBlur = s(12);
-
-      lines.forEach((line, i) => {
-        ctx.font = `700 ${s(fontSize.display)}px 'Inter', system-ui, sans-serif`;
-        ctx.fillStyle = "#ffffff";
-        if (i === lines.length - 1) ctx.fillStyle = accentColor.value;
-        ctx.fillText(line, W / 2, y + lineH * i);
-      });
-
-      if (subtext) {
-        ctx.font = `400 ${s(fontSize.sub)}px 'Inter', system-ui, sans-serif`;
-        ctx.fillStyle = "rgba(255,255,255,0.65)";
-        ctx.shadowBlur = 0;
-        ctx.fillText(subtext, W / 2, y + lines.length * lineH + s(24));
-      }
-
-      ctx.restore();
-      return totalTextH;
-    };
-
-    const renderBadge = (yPos) => {
-      if (!showBadge || !badgeText) return;
-      const bW = s(280);
-      const bH = s(46);
-      const bX = (W - bW) / 2;
-      const bY = yPos;
-      const r = s(23);
-      
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(bX, bY, bW, bH, r);
-      ctx.fillStyle = accentColor.value + "18";
-      ctx.strokeStyle = accentColor.value + "44";
-      ctx.lineWidth = s(2);
-      ctx.fill();
-      ctx.stroke();
-      
-      ctx.font = `600 ${s(20)}px 'Inter', sans-serif`;
-      ctx.fillStyle = accentColor.value;
-      ctx.textAlign = "center";
-      ctx.fillText(badgeText, W / 2, bY + bH * 0.64);
-      ctx.restore();
-    };
-
-    const drawDevice = (deviceYCenter) => {
-      const maxDeviceH = H * 0.58;
-      const phoneH = maxDeviceH;
-      const phoneW = phoneH / exportSize.ratio;
-      const phoneX = (W - phoneW) / 2;
-      const phoneY = deviceYCenter - phoneH / 2;
-      const cornerR = phoneW * 0.08;
-
-      ctx.save();
-      if (deviceShadow) {
-        ctx.shadowColor = "rgba(0,0,0,0.65)";
-        ctx.shadowBlur = s(40);
-        ctx.shadowOffsetY = s(20);
-      }
-
-      ctx.beginPath();
-      ctx.roundRect(phoneX, phoneY, phoneW, phoneH, cornerR);
-      ctx.fillStyle = "#16161a";
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      ctx.roundRect(phoneX, phoneY, phoneW, phoneH, cornerR);
-      ctx.strokeStyle = "rgba(255,255,255,0.14)";
-      ctx.lineWidth = s(4);
-      ctx.stroke();
-      ctx.restore();
-
-      const bz = phoneW * 0.035;
-      const screenX = phoneX + bz;
-      const screenY = phoneY + bz;
-      const screenW = phoneW - bz * 2;
-      const screenH = phoneH - bz * 2;
-      const screenR = cornerR * 0.8;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(screenX, screenY, screenW, screenH, screenR);
-      ctx.clip();
-
-      if (screenshotImg) {
-        ctx.drawImage(screenshotImg, screenX, screenY, screenW, screenH);
-      } else {
-        ctx.fillStyle = "#0d0d0f";
-        ctx.fillRect(screenX, screenY, screenW, screenH);
-        ctx.font = `${s(24)}px 'Inter', sans-serif`;
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
-        ctx.textAlign = "center";
-        ctx.fillText("Drop Artwork Here", screenX + screenW / 2, screenY + screenH / 2);
-      }
-      ctx.restore();
-
-      if (exportSize.ratio > 1.7) {
-        const diW = phoneW * 0.26;
-        const diH = phoneW * 0.045;
-        const diX = phoneX + phoneW / 2 - diW / 2;
-        const diY = phoneY + bz * 1.4;
-        ctx.save();
-        ctx.fillStyle = "#000000";
-        ctx.beginPath();
-        ctx.roundRect(diX, diY, diW, diH, diH / 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    };
-
-    const textPad = s(80);
-    const textBlockH = (headline.split("\n").length + 1) * fontSize.display * 1.25 * scale;
-
-    if (layout.value === "top") {
-      renderText(textPad + s(fontSize.display * 0.4));
-      if (showBadge) renderBadge(textPad + textBlockH * 0.7);
-      drawDevice(H * 0.66);
-    } else if (layout.value === "bottom") {
-      drawDevice(H * 0.34);
-      renderText(H * 0.66);
-      if (showBadge) renderBadge(H * 0.66 + textBlockH * 0.7);
-    } else {
-      renderText(textPad + s(fontSize.display * 0.2));
-      if (showBadge) renderBadge(textPad + textBlockH * 0.5);
-      drawDevice(H * 0.64);
-    }
-  }, [screenshot, screenshotImg, gradient, accentColor, headline, subtext, layout, fontSize, deviceShadow, showBadge, badgeText, exportSize]);
-
-  useEffect(() => {
-    const canvas = previewRef.current;
-    if (!canvas) return;
-    drawComposite(canvas, PREVIEW_W, PREVIEW_H, PREVIEW_H / exportSize.h);
-  }, [drawComposite, exportSize, PREVIEW_W, PREVIEW_H]);
-
-  const handleExport = async () => {
-    setGenerating(true);
-    const canvas = canvasRef.current;
-    drawComposite(canvas, exportSize.w, exportSize.h, 1);
-    await new Promise(r => setTimeout(r, 100));
-    canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `screenshot-${exportSize.w}x${exportSize.h}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setGenerating(false);
-    }, "image/png");
-  };
-
-  const styles = {
-    root: {
-      height: "100vh",
-      background: "#0d0d0d",
-      color: "#e8e8e8",
-      fontFamily: "'Inter', system-ui, sans-serif",
-      display: "flex",
-      flexDirection: "column",
-      overflow: "hidden",
-    },
-    header: {
-      height: "56px",
-      minHeight: "56px",
-      padding: "0 32px",
-      borderBottom: "1px solid #1e1e1e",
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      boxSizing: "border-box",
-    },
-    headerDot: {
-      width: 8, height: 8, borderRadius: "50%",
-      background: "#4ade80",
-    },
-    headerTitle: {
-      fontSize: 15,
-      fontWeight: 600,
-      color: "#f0f0f0",
-      letterSpacing: "0.02em",
-    },
-    headerSub: {
-      fontSize: 12,
-      color: "#555",
-      marginLeft: "auto",
-    },
-    body: {
-      display: "flex",
-      flex: 1,
-      height: "calc(100vh - 56px)",
-      overflow: "hidden",
-    },
-    panel: {
-      width: 320,
-      minWidth: 320,
-      background: "#111",
-      borderRight: "1px solid #1e1e1e",
-      padding: "24px 20px",
-      overflowY: "auto",
-      display: "flex",
-      flexDirection: "column",
-      gap: 24,
-      boxSizing: "border-box",
-    },
-    section: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10,
-    },
-    sectionLabel: {
-      fontSize: 10,
-      fontWeight: 700,
-      letterSpacing: "0.12em",
-      color: "#444",
-      textTransform: "uppercase",
-    },
-    dropzone: {
-      border: "1.5px dashed #2a2a2a",
+    const getToggleStyle = (active) => ({
+      width: 36,
+      height: 20,
       borderRadius: 10,
-      padding: "28px 16px",
-      textAlign: "center",
+      background: active ? "#4ade80" : "#2a2a2a",
+      position: "relative",
       cursor: "pointer",
-      background: "#0a0a0a",
-    },
-    dropzoneText: { fontSize: 13, color: "#555" },
-    dropzoneHint: { fontSize: 11, color: "#333", marginTop: 4 },
-    previewThumb: {
-      width: "100%",
-      height: 120,
-      objectFit: "contain",
-      borderRadius: 6,
-      background: "#0a0a0a",
-      border: "1px solid #1e1e1e",
-    },
-    chipRow: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 6,
-    },
-    textarea: {
-      background: "#0a0a0a",
-      border: "1px solid #2a2a2a",
+    });
+
+    const getToggleKnobStyle = (active) => ({
+      position: "absolute",
+      top: 3,
+      left: active ? 19 : 3,
+      width: 14,
+      height: 14,
+      borderRadius: "50%",
+      background: "#fff",
+      transition: "left 0.2s",
+    });
+
+    const getBtnStyle = (variant = "primary") => ({
+      padding: variant === "primary" ? "11px 20px" : "8px 14px",
       borderRadius: 8,
-      color: "#e8e8e8",
-      fontSize: 13,
-      padding: "10px 12px",
-      fontFamily: "inherit",
-      resize: "none",
-      lineHeight: 1.5,
-      outline: "none",
-      width: "100%",
-      boxSizing: "border-box",
-    },
-    input: {
-      background: "#0a0a0a",
-      border: "1px solid #2a2a2a",
-      borderRadius: 8,
-      color: "#e8e8e8",
-      fontSize: 13,
-      padding: "8px 12px",
-      fontFamily: "inherit",
-      outline: "none",
-      width: "100%",
-      boxSizing: "border-box",
-    },
-    toggleRow: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    toggleLabel: { fontSize: 13, color: "#888" },
-    preview: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "20px",
-      gap: 20,
-      background: "#08080a",
-      overflow: "hidden",
-    },
-    previewLabel: {
-      fontSize: 11,
-      color: "#333",
-      letterSpacing: "0.1em",
-      textTransform: "uppercase",
-    },
-    previewCanvas: {
-      borderRadius: 8,
-      boxShadow: "0 16px 64px rgba(0,0,0,0.85)",
-      border: "1px solid #1c1c22",
-      background: "#000",
-      height: `${PREVIEW_H}px`,
-      width: `${PREVIEW_W}px`,
-      transition: "width 0.15s ease, height 0.15s ease",
-    },
-    exportRow: {
-      display: "flex",
-      gap: 10,
-      alignItems: "center",
-      justifyContent: "center",
-      width: "100%",
-      height: "40px",
-    },
-    select: {
-      background: "#111",
-      border: "1px solid #2a2a2a",
-      borderRadius: 8,
-      color: "#aaa",
-      fontSize: 12,
-      padding: "8px 12px",
-      fontFamily: "inherit",
-      outline: "none",
+      fontWeight: 600,
+      fontSize: variant === "primary" ? 13 : 12,
       cursor: "pointer",
-    },
-  };
+      border: "none",
+      background: variant === "primary" ? "#4ade80" : "#1e1e1e",
+      color: variant === "primary" ? "#0a1a10" : "#aaa",
+    });
 
-  return (
-    <div style={styles.root}>
-      <header style={styles.header}>
-        <div style={styles.headerDot} />
-        <span style={styles.headerTitle}>Screenshot Compositor</span>
-        <span style={styles.headerSub}>Rekluz Labs · Editor Workspace</span>
-      </header>
+    function ScreenshotCompositor() {
+      const [screenshot, setScreenshot] = useState(null);
+      const [screenshotImg, setScreenshotImg] = useState(null);
+      const [gradient, setGradient] = useState(GRADIENTS[0]);
+      const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0]);
+      const [headline, setHeadline] = useState("Restore Your\nFamily Photos");
+      const [subtext, setSubtext] = useState("AI-powered color & clarity — right on your phone");
+      const [layout, setLayout] = useState(LAYOUTS[0]);
+      const [fontSize, setFontSize] = useState(FONT_SIZES[1]);
+      const [exportSize, setExportSize] = useState(EXPORT_SIZES[0]);
+      const [deviceShadow, setDeviceShadow] = useState(true);
+      const [showBadge, setShowBadge] = useState(false);
+      const [badgeText, setBadgeText] = useState("Free • No Ads • Offline");
+      const [generating, setGenerating] = useState(false);
+      
+      const [workspaceHeight, setWorkspaceHeight] = useState(580);
 
-      <div style={styles.body}>
-        <div style={styles.panel}>
-          {/* Upload */}
-          <div style={styles.section}>
-            <span style={styles.sectionLabel}>Screenshot</span>
-            <input 
-              type="file" 
-              ref={fileRef} 
-              style={{ display: "none" }} 
-              onChange={handleImageUpload} 
-              accept="image/*"
-            />
-            <div 
-              style={styles.dropzone} 
-              onClick={() => fileRef.current.click()}
-              onDrop={handleDrop}
-              onDragOver={e => e.preventDefault()}
-            >
-              {screenshot ? (
-                <img src={screenshot} alt="Preview Source" style={styles.previewThumb} />
-              ) : (
-                <>
-                  <div style={styles.dropzoneText}>Drop screenshot here</div>
-                  <div style={styles.dropzoneHint}>or click to browse · PNG / JPG</div>
-                </>
-              )}
-            </div>
-          </div>
+      const canvasRef = useRef(null);
+      const previewRef = useRef(null);
+      const fileRef = useRef(null);
+      const previewAreaRef = useRef(null);
 
-          {/* Background */}
-          <div style={styles.section}>
-            <span style={styles.sectionLabel}>Background</span>
-            <div style={styles.chipRow}>
-              {GRADIENTS.map(g => (
-                <div
-                  key={g.label}
-                  style={getGradChipStyle(gradient.label === g.label, g)}
-                  onClick={() => setGradient(g)}
-                  title={g.label}
-                />
-              ))}
-            </div>
-          </div>
+      const PREVIEW_H = workspaceHeight;
+      const PREVIEW_W = Math.round(PREVIEW_H * (exportSize.w / exportSize.h));
 
-          {/* Accent */}
-          <div style={styles.section}>
-            <span style={styles.sectionLabel}>Accent Color</span>
-            <div style={styles.chipRow}>
-              {ACCENT_COLORS.map(a => (
-                <div
-                  key={a.label}
-                  style={getAccentDotStyle(accentColor.label === a.label, a.value)}
-                  onClick={() => setAccentColor(a)}
-                  title={a.label}
-                />
-              ))}
-            </div>
-          </div>
+      useEffect(() => {
+        if (!previewAreaRef.current) return;
 
-          {/* Layout */}
-          <div style={styles.section}>
-            <span style={styles.sectionLabel}>Layout</span>
-            <div style={styles.chipRow}>
-              {LAYOUTS.map(l => (
-                <div
-                  key={l.label}
-                  style={getChipStyle(layout.value === l.value, accentColor.value)}
-                  onClick={() => setLayout(l)}
-                >
-                  {l.label}
-                </div>
-              ))}
-            </div>
-          </div>
+        const resizeObserver = new ResizeObserver((entries) => {
+          for (let entry of entries) {
+            const containerHeight = entry.contentRect.height;
+            const optimizedHeight = Math.max(400, containerHeight - 120);
+            setWorkspaceHeight(optimizedHeight);
+          }
+        });
 
-          {/* Font size */}
-          <div style={styles.section}>
-            <span style={styles.sectionLabel}>Text Size</span>
-            <div style={styles.chipRow}>
-              {FONT_SIZES.map(f => (
-                <div
-                  key={f.label}
-                  style={getChipStyle(fontSize.label === f.label, accentColor.value)}
-                  onClick={() => setFontSize(f)}
-                >
-                  {f.label}
-                </div>
-              ))}
-            </div>
-          </div>
+        resizeObserver.observe(previewAreaRef.current);
+        return () => resizeObserver.disconnect();
+      }, []);
 
-          {/* Headline */}
-          <div style={styles.section}>
-            <span style={styles.sectionLabel}>Headline</span>
-            <textarea
-              style={styles.textarea}
-              value={headline}
-              onChange={e => setHeadline(e.target.value)}
-              placeholder={"Line one\nLine two"}
-              rows={2}
-            />
-          </div>
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setScreenshot(URL.createObjectURL(file));
+        const img = new Image();
+        img.onload = () => setScreenshotImg(img);
+        img.src = URL.createObjectURL(file);
+      };
 
-          {/* Subtext */}
-          <div style={styles.section}>
-            <span style={styles.sectionLabel}>Subtext</span>
-            <input
-              style={styles.input}
-              value={subtext}
-              onChange={e => setSubtext(e.target.value)}
-              placeholder="Short supporting line"
-            />
-          </div>
+      const handleDrop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith("image/")) return;
+        setScreenshot(URL.createObjectURL(file));
+        const img = new Image();
+        img.onload = () => setScreenshotImg(img);
+        img.src = URL.createObjectURL(file);
+      };
 
-          {/* Badge */}
-          <div style={styles.section}>
-            <div style={styles.toggleRow}>
-              <span style={styles.toggleLabel}>Show Badge</span>
-              <div style={getToggleStyle(showBadge)} onClick={() => setShowBadge(v => !v)}>
-                <div style={getToggleKnobStyle(showBadge)} />
-              </div>
-            </div>
-            {showBadge && (
-              <input
-                style={styles.input}
-                value={badgeText}
-                onChange={e => setBadgeText(e.target.value)}
-                placeholder="Free • No Ads • Offline"
-              />
-            )}
-          </div>
+      const drawComposite = useCallback((canvas, W, H, scale = 1) => {
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, W, H);
+        canvas.width = W;
+        canvas.height = H;
 
-          {/* Toggles */}
-          <div style={styles.section}>
-            <div style={styles.toggleRow}>
-              <span style={styles.toggleLabel}>Device Shadow</span>
-              <div style={getToggleStyle(deviceShadow)} onClick={() => setDeviceShadow(v => !v)}>
-                <div style={getToggleKnobStyle(deviceShadow)} />
-              </div>
-            </div>
-          </div>
-        </div>
+        const s = (v) => Math.round(v * scale);
 
-        {/* Dynamic Interactive Preview Viewport */}
-        <div ref={previewAreaRef} style={styles.preview}>
-          <span style={styles.previewLabel}>Live Preview</span>
-          <canvas ref={previewRef} style={styles.previewCanvas} />
+        const bg = ctx.createLinearGradient(0, 0, W, H);
+        const stops = gradient.value.match(/#[0-9a-fA-F]{6}/g) || ["#0d2b1f", "#1a5c3a", "#0d2b1f"];
+        stops.forEach((color, i) => bg.addColorStop(i / (stops.length - 1), color));
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.globalAlpha = 0.03;
+        for (let y = 0; y < H; y += 4) {
+          for (let x = 0; x < W; x += 4) {
+            const v = Math.random() * 255;
+            ctx.fillStyle = `rgb(${v},${v},${v})`;
+            ctx.fillRect(x, y, 4, 4);
+          }
+        }
+        ctx.restore();
+
+        ctx.save();
+        const glowX = W / 2;
+        const glowY = layout.value === "top" ? H * 0.70 : layout.value === "bottom" ? H * 0.30 : H * 0.5;
+        const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, W * 0.6);
+        const accentHex = accentColor.value;
+        glow.addColorStop(0, accentHex + "26");
+        glow.addColorStop(1, "transparent");
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+
+        const renderText = (yStart) => {
+          const lines = headline.split("\n");
+          const lineH = s(fontSize.display * 1.15);
+          const totalTextH = lines.length * lineH + s(fontSize.sub * 1.6) + s(24);
+          let y = yStart;
+
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.shadowColor = "rgba(0,0,0,0.5)";
+          ctx.shadowBlur = s(12);
+
+          lines.forEach((line, i) => {
+            ctx.font = `700 ${s(fontSize.display)}px 'Inter', system-ui, sans-serif`;
+            ctx.fillStyle = "#ffffff";
+            if (i === lines.length - 1) ctx.fillStyle = accentColor.value;
+            ctx.fillText(line, W / 2, y + lineH * i);
+          });
+
+          if (subtext) {
+            ctx.font = `400 ${s(fontSize.sub)}px 'Inter', system-ui, sans-serif`;
+            ctx.fillStyle = "rgba(255,255,255,0.65)";
+            ctx.shadowBlur = 0;
+            ctx.fillText(subtext, W / 2, y + lines.length * lineH + s(24));
+          }
+
+          ctx.restore();
+          return totalTextH;
+        };
+
+        const renderBadge = (yPos) => {
+          if (!showBadge || !badgeText) return;
+          const bW = s(280);
+          const bH = s(46);
+          const bX = (W - bW) / 2;
+          const bY = yPos;
+          const r = s(23);
           
-          <div style={styles.exportRow}>
-            <select
-              style={styles.select}
-              value={exportSize.label}
-              onChange={e => setExportSize(EXPORT_SIZES.find(s => s.label === e.target.value))}
-            >
-              {EXPORT_SIZES.map(s => (
-                <option key={s.label} value={s.label}>{s.label}</option>
-              ))}
-            </select>
-            <button
-              style={{ ...getBtnStyle("primary"), width: "auto", opacity: generating ? 0.6 : 1 }}
-              onClick={handleExport}
-              disabled={generating}
-            >
-              {generating ? "Exporting…" : "Export PNG"}
-            </button>
+          ctx.save();
+          ctx.beginPath();
+          ctx.roundRect(bX, bY, bW, bH, r);
+          ctx.fillStyle = accentColor.value + "18";
+          ctx.strokeStyle = accentColor.value + "44";
+          ctx.lineWidth = s(2);
+          ctx.fill();
+          ctx.stroke();
+          
+          ctx.font = `600 ${s(20)}px 'Inter', sans-serif`;
+          ctx.fillStyle = accentColor.value;
+          ctx.textAlign = "center";
+          ctx.fillText(badgeText, W / 2, bY + bH * 0.64);
+          ctx.restore();
+        };
+
+        const drawDevice = (deviceYCenter) => {
+          const maxDeviceH = H * 0.58;
+          const phoneH = maxDeviceH;
+          const phoneW = phoneH / exportSize.ratio;
+          const phoneX = (W - phoneW) / 2;
+          const phoneY = deviceYCenter - phoneH / 2;
+          const cornerR = phoneW * 0.08;
+
+          ctx.save();
+          if (deviceShadow) {
+            ctx.shadowColor = "rgba(0,0,0,0.65)";
+            ctx.shadowBlur = s(40);
+            ctx.shadowOffsetY = s(20);
+          }
+
+          ctx.beginPath();
+          ctx.roundRect(phoneX, phoneY, phoneW, phoneH, cornerR);
+          ctx.fillStyle = "#16161a";
+          ctx.fill();
+          ctx.restore();
+
+          ctx.save();
+          ctx.roundRect(phoneX, phoneY, phoneW, phoneH, cornerR);
+          ctx.strokeStyle = "rgba(255,255,255,0.14)";
+          ctx.lineWidth = s(4);
+          ctx.stroke();
+          ctx.restore();
+
+          const bz = phoneW * 0.035;
+          const screenX = phoneX + bz;
+          const screenY = phoneY + bz;
+          const screenW = phoneW - bz * 2;
+          const screenH = phoneH - bz * 2;
+          const screenR = cornerR * 0.8;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.roundRect(screenX, screenY, screenW, screenH, screenR);
+          ctx.clip();
+
+          if (screenshotImg) {
+            ctx.drawImage(screenshotImg, screenX, screenY, screenW, screenH);
+          } else {
+            ctx.fillStyle = "#0d0d0f";
+            ctx.fillRect(screenX, screenY, screenW, screenH);
+            ctx.font = `${s(24)}px 'Inter', sans-serif`;
+            ctx.fillStyle = "rgba(255,255,255,0.15)";
+            ctx.textAlign = "center";
+            ctx.fillText("Drop Artwork Here", screenX + screenW / 2, screenY + screenH / 2);
+          }
+          ctx.restore();
+
+          if (exportSize.ratio > 1.7) {
+            const diW = phoneW * 0.26;
+            const diH = phoneW * 0.045;
+            const diX = phoneX + phoneW / 2 - diW / 2;
+            const diY = phoneY + bz * 1.4;
+            ctx.save();
+            ctx.fillStyle = "#000000";
+            ctx.beginPath();
+            ctx.roundRect(diX, diY, diW, diH, diH / 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        };
+
+        const textPad = s(80);
+        const textBlockH = (headline.split("\n").length + 1) * fontSize.display * 1.25 * scale;
+
+        if (layout.value === "top") {
+          renderText(textPad + s(fontSize.display * 0.4));
+          if (showBadge) renderBadge(textPad + textBlockH * 0.7);
+          drawDevice(H * 0.66);
+        } else if (layout.value === "bottom") {
+          drawDevice(H * 0.34);
+          renderText(H * 0.66);
+          if (showBadge) renderBadge(H * 0.66 + textBlockH * 0.7);
+        } else {
+          renderText(textPad + s(fontSize.display * 0.2));
+          if (showBadge) renderBadge(textPad + textBlockH * 0.5);
+          drawDevice(H * 0.64);
+        }
+      }, [screenshot, screenshotImg, gradient, accentColor, headline, subtext, layout, fontSize, deviceShadow, showBadge, badgeText, exportSize]);
+
+      useEffect(() => {
+        const canvas = previewRef.current;
+        if (!canvas) return;
+        drawComposite(canvas, PREVIEW_W, PREVIEW_H, PREVIEW_H / exportSize.h);
+      }, [drawComposite, exportSize, PREVIEW_W, PREVIEW_H]);
+
+      const handleExport = async () => {
+        setGenerating(true);
+        const canvas = canvasRef.current;
+        drawComposite(canvas, exportSize.w, exportSize.h, 1);
+        await new Promise(r => setTimeout(r, 100));
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `screenshot-${exportSize.w}x${exportSize.h}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+          setGenerating(false);
+        }, "image/png");
+      };
+
+      const styles = {
+        root: { height: "100vh", background: "#0d0d0d", color: "#e8e8e8", fontFamily: "'Inter', system-ui, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" },
+        header: { height: "56px", minHeight: "56px", padding: "0 32px", borderBottom: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: 12, boxSizing: "border-box" },
+        headerDot: { width: 8, height: 8, borderRadius: "50%", background: "#4ade80" },
+        headerTitle: { fontSize: 15, fontWeight: 600, color: "#f0f0f0", letterSpacing: "0.02em" },
+        headerSub: { fontSize: 12, color: "#555", marginLeft: "auto" },
+        body: { display: "flex", flex: 1, height: "calc(100vh - 56px)", overflow: "hidden" },
+        panel: { width: 320, minWidth: 320, background: "#111", borderRight: "1px solid #1e1e1e", padding: "24px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 24, boxSizing: "border-box" },
+        section: { display: "flex", flexDirection: "column", gap: 10 },
+        sectionLabel: { fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#444", textTransform: "uppercase" },
+        dropzone: { border: "1.5px dashed #2a2a2a", borderRadius: 10, padding: "28px 16px", textAlign: "center", cursor: "pointer", background: "#0a0a0a" },
+        dropzoneText: { fontSize: 13, color: "#555" },
+        dropzoneHint: { fontSize: 11, color: "#333", marginTop: 4 },
+        previewThumb: { width: "100%", height: 120, objectFit: "contain", borderRadius: 6, background: "#0a0a0a", border: "1px solid #1e1e1e" },
+        chipRow: { display: "flex", flexWrap: "wrap", gap: 6 },
+        textarea: { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e8e8", fontSize: 13, padding: "10px 12px", fontFamily: "inherit", resize: "none", lineHeight: 1.5, outline: "none", width: "100%", boxSizing: "border-box" },
+        input: { background: "#0a0a0a", border: "1px solid #2a2a2a", borderRadius: 8, color: "#e8e8e8", fontSize: 13, padding: "8px 12px", fontFamily: "inherit", outline: "none", width: "100%", boxSizing: "border-box" },
+        toggleRow: { display: "flex", alignItems: "center", justifyBox: "space-between", justifyContent: "space-between" },
+        toggleLabel: { fontSize: 13, color: "#888" },
+        preview: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", gap: 20, background: "#08080a", overflow: "hidden" },
+        previewLabel: { fontSize: 11, color: "#333", letterSpacing: "0.1em", textTransform: "uppercase" },
+        previewCanvas: { borderRadius: 8, boxShadow: "0 16px 64px rgba(0,0,0,0.85)", border: "1px solid #1c1c22", background: "#000", height: `${PREVIEW_H}px`, width: `${PREVIEW_W}px`, transition: "width 0.15s ease, height 0.15s ease" },
+        exportRow: { display: "flex", gap: 10, alignItems: "center", justifyContent: "center", width: "100%", height: "40px" },
+        select: { background: "#111", border: "1px solid #2a2a2a", borderRadius: 8, color: "#aaa", fontSize: 12, padding: "8px 12px", fontFamily: "inherit", outline: "none", cursor: "pointer" },
+      };
+
+      return (
+        <div style={styles.root}>
+          <header style={styles.header}>
+            <div style={styles.headerDot} />
+            <span style={styles.headerTitle}>Screenshot Compositor</span>
+            <span style={styles.headerSub}>Rekluz Labs · Editor Workspace</span>
+          </header>
+
+          <div style={styles.body}>
+            <div style={styles.panel}>
+              <div style={styles.section}>
+                <span style={styles.sectionLabel}>Screenshot</span>
+                <input type="file" ref={fileRef} style={{ display: "none" }} onChange={handleImageUpload} accept="image/*" />
+                <div style={styles.dropzone} onClick={() => fileRef.current.click()} onDrop={handleDrop} onDragOver={e => e.preventDefault()}>
+                  {screenshot ? (
+                    <img src={screenshot} alt="Preview Source" style={styles.previewThumb} />
+                  ) : (
+                    <>
+                      <div style={styles.dropzoneText}>Drop screenshot here</div>
+                      <div style={styles.dropzoneHint}>or click to browse · PNG / JPG</div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div style={styles.section}>
+                <span style={styles.sectionLabel}>Background</span>
+                <div style={styles.chipRow}>
+                  {GRADIENTS.map(g => (
+                    <div key={g.label} style={getGradChipStyle(gradient.label === g.label, g)} onClick={() => setGradient(g)} title={g.label} />
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.section}>
+                <span style={styles.sectionLabel}>Accent Color</span>
+                <div style={styles.chipRow}>
+                  {ACCENT_COLORS.map(a => (
+                    <div key={a.label} style={getAccentDotStyle(accentColor.label === a.label, a.value)} onClick={() => setAccentColor(a)} title={a.label} />
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.section}>
+                <span style={styles.sectionLabel}>Layout</span>
+                <div style={styles.chipRow}>
+                  {LAYOUTS.map(l => (
+                    <div key={l.label} style={getChipStyle(layout.value === l.value, accentColor.value)} onClick={() => setLayout(l)}>
+                      {l.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.section}>
+                <span style={styles.sectionLabel}>Text Size</span>
+                <div style={styles.chipRow}>
+                  {FONT_SIZES.map(f => (
+                    <div key={f.label} style={getChipStyle(fontSize.label === f.label, accentColor.value)} onClick={() => setFontSize(f)}>
+                      {f.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.section}>
+                <span style={styles.sectionLabel}>Headline</span>
+                <textarea style={styles.textarea} value={headline} onChange={e => setHeadline(e.target.value)} placeholder={"Line one\nLine two"} rows={2} />
+              </div>
+
+              <div style={styles.section}>
+                <span style={styles.sectionLabel}>Subtext</span>
+                <input style={styles.input} value={subtext} onChange={e => setSubtext(e.target.value)} placeholder="Short supporting line" />
+              </div>
+
+              <div style={styles.section}>
+                <div style={styles.toggleRow}>
+                  <span style={styles.toggleLabel}>Show Badge</span>
+                  <div style={getToggleStyle(showBadge)} onClick={() => setShowBadge(v => !v)}>
+                    <div style={getToggleKnobStyle(showBadge)} />
+                  </div>
+                </div>
+                {showBadge && (
+                  <input style={styles.input} value={badgeText} onChange={e => setBadgeText(e.target.value)} placeholder="Free • No Ads • Offline" />
+                )}
+              </div>
+
+              <div style={styles.section}>
+                <div style={styles.toggleRow}>
+                  <span style={styles.toggleLabel}>Device Shadow</span>
+                  <div style={getToggleStyle(deviceShadow)} onClick={() => setDeviceShadow(v => !v)}>
+                    <div style={getToggleKnobStyle(deviceShadow)} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div ref={previewAreaRef} style={styles.preview}>
+              <span style={styles.previewLabel}>Live Preview</span>
+              <canvas ref={previewRef} style={styles.previewCanvas} />
+              
+              <div style={styles.exportRow}>
+                <select style={styles.select} value={exportSize.label} onChange={e => setExportSize(EXPORT_SIZES.find(s => s.label === e.target.value))}>
+                  {EXPORT_SIZES.map(s => (
+                    <option key={s.label} value={s.label}>{s.label}</option>
+                  ))}
+                </select>
+                <button style={{ ...getBtnStyle("primary"), width: "auto", opacity: generating ? 0.6 : 1 }} onClick={handleExport} disabled={generating}>
+                  {generating ? "Exporting…" : "Export PNG"}
+                </button>
+              </div>
+              <canvas ref={canvasRef} style={{ display: "none" }} />
+            </div>
           </div>
-          <canvas ref={canvasRef} style={{ display: "none" }} />
         </div>
-      </div>
-    </div>
-  );
-}
+      );
+    }
+
+    const root = AppStoreScreenshotCreator = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<ScreenshotCompositor />);
+  </script>
+</body>
+</html>
